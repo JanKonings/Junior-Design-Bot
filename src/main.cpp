@@ -24,12 +24,32 @@ volatile unsigned char currentState = state0;  // volatile: used inside ISR
 unsigned long lastInterruptTime = 0;  // for debouncing
 
 
+// Interrupt Service Routine (ISR) for button press
+void buttonISR() {
+  unsigned long currentTime = millis();
+  if (currentTime - lastInterruptTime > 200) { // debounce (200 ms)
+    // Advance to the next state
+    switch (currentState) {
+      case state0: currentState = state1; break;
+      case state1: currentState = state2; break;
+      case state2: currentState = state3; break;
+      case state3: currentState = state4; break;
+      case state4: currentState = state5; break;
+      case state5: currentState = state6; break;
+      case state6: currentState = state0; break;
+    }
+    Serial.print("Interrupt: Button pressed. New state = ");
+    Serial.println(currentState);
+    lastInterruptTime = currentTime;
+  }
+}
+
 void setup() {
 
   pinMode(LED_BUILTIN, OUTPUT);
   pinMode(buttonInput, INPUT_PULLUP);
 
-  Serial.begin(115200);
+  Serial.begin(9600);
   while (!Serial) {;}
   Serial.println("Setup complete. Starting in state0.");
 
@@ -55,31 +75,21 @@ void setup() {
   Serial.println(ip);
 }
 
-// Interrupt Service Routine (ISR) for button press
-void buttonISR() {
-  unsigned long currentTime = millis();
-  if (currentTime - lastInterruptTime > 200) { // debounce (200 ms)
-    // Advance to the next state
-    switch (currentState) {
-      case state0: currentState = state1; break;
-      case state1: currentState = state2; break;
-      case state2: currentState = state3; break;
-      case state3: currentState = state4; break;
-      case state4: currentState = state5; break;
-      case state5: currentState = state6; break;
-      case state6: currentState = state0; break;
-    }
-    Serial.print("Interrupt: Button pressed. New state = ");
-    Serial.println(currentState);
-    lastInterruptTime = currentTime;
+
+
+void changeState(unsigned char newState) {
+  if (newState > state6) {
+    Serial.println("Invalid state. State unchanged.");
+    return;
   }
+  
+  currentState = newState;
+  Serial.print("State changed to ");
+  Serial.println(currentState);
 }
 
 //LED blinking function
 void handleBlink(int times) {
-  Serial.print("Blinking ");
-  Serial.print(times);
-  Serial.println(" times.");
   for (int i = 0; i < times; i++) {
     digitalWrite(LED_BUILTIN, HIGH);
     delay(100);
@@ -99,19 +109,24 @@ void loop() {
   client.endMessage();
 
   while (client.connected()) {
-    int blinkTimes = currentState + 1; // state0=1 blink, state6=7 blinks
+    int blinkTimes = currentState; // state0=1 blink, state6=7 blinks
     handleBlink(blinkTimes);
     delay(1000);
 
     int msgSize = client.parseMessage();
     if (msgSize > 0) {
-      Serial.print("Received message: ");
       String msg = client.readString();
-      Serial.println(msg);
+      int pos = msg.indexOf('.');
+      int stateNum = 0;
 
-    
-
-
+      if(pos != -1) {
+        String stateStr = msg.substring(pos + 1);
+        if(stateStr.startsWith("RIDJ")) {
+          stateStr = stateStr.substring(5); // Extract the number after "RIDJ "
+          stateNum = stateStr.toInt();
+          changeState(stateNum);
+        }
+      }
     }
   }
 
