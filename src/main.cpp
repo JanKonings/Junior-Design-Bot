@@ -55,9 +55,12 @@ void loop() {
   client.endMessage();
 
   while (client.connected()) {
-    client.beginMessage(TYPE_TEXT);
-    client.print("Ferda");
-    client.endMessage();
+    int msgSize = client.parseMessage();
+    if (msgSize > 0) {
+      Serial.print("Received message: ");
+      String msg = client.readString();
+      Serial.println(msg);
+    }
   }
 
   Serial.println("disconnected");
