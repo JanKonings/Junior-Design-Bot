@@ -78,11 +78,11 @@ void setup() {
 
 
 void changeState(unsigned char newState) {
-  if (newState > state6) {
+  if (newState > state6 || newState < state0) {
     Serial.println("Invalid state. State unchanged.");
     return;
   }
-  
+
   currentState = newState;
   Serial.print("State changed to ");
   Serial.println(currentState);
