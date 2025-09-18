@@ -1,13 +1,3 @@
-/*
-  Simple WebSocket client for ArduinoHttpClient library
-  created 28 Jun 2016
-  by Sandeep Mistry
-  modified 22 Jan 2019
-  by Tom Igoe
-  Modified by Gabriel Sessions and Emily Carlson
-  for EE 31
-  this example is in the public domain
-*/
 #include <WiFiNINA.h>
 #include <ArduinoHttpClient.h>
 
@@ -25,8 +15,28 @@ String clientID = "89C87865077A"; //Insert your Client ID Here!
 int status = WL_IDLE_STATUS;
 int count = 0;
 
+// code for the state machine
+const unsigned char buttonInput = 2;
+
+enum {state0, state1, state2, state3, state4, state5, state6};
+volatile unsigned char currentState = state0;  // volatile: used inside ISR
+
+unsigned long lastInterruptTime = 0;  // for debouncing
+
+
 void setup() {
-  Serial.begin(9600);
+
+  pinMode(LED_BUILTIN, OUTPUT);
+  pinMode(buttonInput, INPUT_PULLUP);
+
+  Serial.begin(115200);
+  while (!Serial) {;}
+  Serial.println("Setup complete. Starting in state0.");
+
+  // Attach interrupt on falling edge (button press)
+  attachInterrupt(digitalPinToInterrupt(buttonInput), buttonISR, FALLING);
+
+  //Serial.begin(9600);
   while ( status != WL_CONNECTED) {
     Serial.print("Attempting to connect to Network named: ");
     Serial.println(ssid);                   // print the network name (SSID);
@@ -45,6 +55,40 @@ void setup() {
   Serial.println(ip);
 }
 
+// Interrupt Service Routine (ISR) for button press
+void buttonISR() {
+  unsigned long currentTime = millis();
+  if (currentTime - lastInterruptTime > 200) { // debounce (200 ms)
+    // Advance to the next state
+    switch (currentState) {
+      case state0: currentState = state1; break;
+      case state1: currentState = state2; break;
+      case state2: currentState = state3; break;
+      case state3: currentState = state4; break;
+      case state4: currentState = state5; break;
+      case state5: currentState = state6; break;
+      case state6: currentState = state0; break;
+    }
+    Serial.print("Interrupt: Button pressed. New state = ");
+    Serial.println(currentState);
+    lastInterruptTime = currentTime;
+  }
+}
+
+//LED blinking function
+void handleBlink(int times) {
+  Serial.print("Blinking ");
+  Serial.print(times);
+  Serial.println(" times.");
+  for (int i = 0; i < times; i++) {
+    digitalWrite(LED_BUILTIN, HIGH);
+    delay(100);
+    digitalWrite(LED_BUILTIN, LOW);
+    delay(100);
+  }
+}
+
+
 void loop() {
 
   // start Websocket Client
@@ -55,11 +99,19 @@ void loop() {
   client.endMessage();
 
   while (client.connected()) {
+    int blinkTimes = currentState + 1; // state0=1 blink, state6=7 blinks
+    handleBlink(blinkTimes);
+    delay(1000);
+
     int msgSize = client.parseMessage();
     if (msgSize > 0) {
       Serial.print("Received message: ");
       String msg = client.readString();
       Serial.println(msg);
+
+    
+
+
     }
   }
 
