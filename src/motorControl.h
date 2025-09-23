@@ -10,6 +10,7 @@ int BI1 = 6;
 int BI2 = 7;
 int STBY = 8;
 
+void motorSetup();
 
 void forward(int speed);
 void backward(int speed);

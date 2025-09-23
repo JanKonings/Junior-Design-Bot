@@ -46,6 +46,7 @@ void buttonISR() {
 
 void setup() {
 
+  motorSetup();
   pinMode(LED_BUILTIN, OUTPUT);
   pinMode(buttonInput, INPUT_PULLUP);
 
