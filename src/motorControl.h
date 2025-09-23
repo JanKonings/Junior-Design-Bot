@@ -2,13 +2,13 @@
 #include <ArduinoHttpClient.h>
 
 // pins for motor control
-int PWMA = 9;
-int PWMB = 10;
-int AI1 = 4;
-int AI2 = 5;
-int BI1 = 6;
-int BI2 = 7;
-int STBY = 8;
+constexpr int PWMA = 9;
+constexpr int PWMB = 10;
+constexpr int AI1 = 4;
+constexpr int AI2 = 5;
+constexpr int BI1 = 6;
+constexpr int BI2 = 7;
+constexpr int STBY = 8;
 
 
 void forward(int speed);
