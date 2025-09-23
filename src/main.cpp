@@ -1,27 +1,61 @@
-#include <WiFiNINA.h>
-#include <ArduinoHttpClient.h>
-
+#include "motorControl.h"
 /////// you can enter your sensitive data in the Secret tab/arduino_secrets.h
 /////// WiFi Settings ///////
 char ssid[] = "tufts_eecs";
 char pass[] = "foundedin1883";
 
+//websocket connection code
 char serverAddress[] = "34.28.153.91";  // server address
 int port = 80;
-
 WiFiClient wifi;
 WebSocketClient client = WebSocketClient(wifi, serverAddress, port);
 String clientID = "89C87865077A"; //Insert your Client ID Here!
 int status = WL_IDLE_STATUS;
 int count = 0;
 
+
 // code for the state machine
 const unsigned char buttonInput = 2;
-
 enum {state0, state1, state2, state3, state4, state5, state6};
 volatile unsigned char currentState = state0;  // volatile: used inside ISR
 
+//for LED interrupt
 unsigned long lastInterruptTime = 0;  // for debouncing
+
+//Setup for Motor Control
+int PWMA = 9;
+int PWMB = 10;
+int AI1 = 4;
+int AI2 = 5;
+int BI1 = 6;
+int BI2 = 7;
+int STBY = 8;
+
+
+void forward() {
+
+}
+
+void backward() {
+  
+}
+
+void pivot_clockwise() {
+  
+}
+
+void pivot_counter() {
+  
+}
+
+void turn_right() {
+  
+}
+
+void turn_left() {
+  
+}
+
 
 
 // Interrupt Service Routine (ISR) for button press
