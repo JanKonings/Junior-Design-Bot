@@ -133,12 +133,12 @@ void loop() {
 
     switch (currentState) {
       case state0:  stop();                break; // idle
-      case state1:  forward(255);                   break;
-      case state2:  backward(255);                  break;
+      case state1:  forward(100);                   break;
+      case state2:  backward(100);                  break;
       case state3:  pivot_clockwise();           break;
       case state4:  pivot_counter();             break;
-      case state5:  turn_right();                break;
-      case state6:  turn_left();                 break;
+      case state5:  turn_right(200);                break;
+      case state6:  turn_left(200);                 break;
     }
   }
 

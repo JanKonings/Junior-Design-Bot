@@ -18,8 +18,8 @@ void backward(int speed);
 void pivot_clockwise();
 void pivot_counter();
 
-void turn_right();
-void turn_left();
+void turn_right(int speedLeft);
+void turn_left(int speedRight);
 
 void stop();
 

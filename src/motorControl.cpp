@@ -57,24 +57,26 @@ void stop() {
     stopRight();
 }
 
-// A is LEFT motor
-// B is RIGHT motor
+// A is RIGHT motor
+// B is LEFT motor
 void pivot_clockwise() {
-    stopRight();
-    startLeftForward(100);
-}
-
-void pivot_counter() {
     stopLeft();
     startRightForward(100);
 }
 
-void turn_right() {
-    
+void pivot_counter() {
+    stopRight();
+    startLeftForward(100);
 }
 
-void turn_left() {
-  
+void turn_right(int speedLeft) {
+    startLeftForward(speedLeft);
+    startRightForward(100);
+}
+
+void turn_left(int speedRight) {
+    startRightForward(speedRight);
+    startLeftForward(100);
 }
 
 
