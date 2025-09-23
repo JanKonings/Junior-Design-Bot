@@ -10,6 +10,7 @@ void motorSetup() {
     pinMode(PWMA, OUTPUT);
     pinMode(PWMB, OUTPUT);
     pinMode(STBY, OUTPUT);
+    digitalWrite(STBY, HIGH);
 }
 
 

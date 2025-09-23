@@ -22,40 +22,6 @@ volatile unsigned char currentState = state0;  // volatile: used inside ISR
 //for LED interrupt
 unsigned long lastInterruptTime = 0;  // for debouncing
 
-//Setup for Motor Control
-int PWMA = 9;
-int PWMB = 10;
-int AI1 = 4;
-int AI2 = 5;
-int BI1 = 6;
-int BI2 = 7;
-int STBY = 8;
-
-
-void forward() {
-
-}
-
-void backward() {
-  
-}
-
-void pivot_clockwise() {
-  
-}
-
-void pivot_counter() {
-  
-}
-
-void turn_right() {
-  
-}
-
-void turn_left() {
-  
-}
-
 
 
 // Interrupt Service Routine (ISR) for button press
