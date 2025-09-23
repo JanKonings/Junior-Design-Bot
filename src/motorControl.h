@@ -11,8 +11,8 @@ int BI2 = 7;
 int STBY = 8;
 
 
-void forward();
-void backward();
+void forward(int speed);
+void backward(int speed);
 
 void pivot_clockwise();
 void pivot_counter();
