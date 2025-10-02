@@ -1,3 +1,6 @@
+#include <WiFiNINA.h>
+#include <ArduinoHttpClient.h>
+
 const int redLED = 2;
 const int blueLED = 3;
 const int sensorPin = A0;

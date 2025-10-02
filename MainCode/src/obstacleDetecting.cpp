@@ -1,7 +1,7 @@
 #include <WiFiNINA.h>
 #include <ArduinoHttpClient.h>
 
-constexpr char dividerIn = 'A1';
+constexpr int dividerIn = A1;
 constexpr int IRled = 11;
 
 void obstacleDetectingSetup() {
