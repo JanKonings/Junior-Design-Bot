@@ -1,5 +1,10 @@
 #include "motorControl.h"
 #include "obstacleDetecting.h"
+#include "colorsensor.h"
+
+
+
+#include <WiFiNINA.h>
 
 // =========================
 // WiFi / WebSocket Setup
@@ -7,12 +12,19 @@
 char ssid[] = "tufts_eecs";
 char pass[] = "foundedin1883";
 
-char serverAddress[] = "34.28.153.91";  // server address
-int port = 80;
+char serverAddress[] = "10.5.12.247";  // server address
+int port = 8080;
 WiFiClient wifi;
 WebSocketClient client = WebSocketClient(wifi, serverAddress, port);
 String clientID = "89C87865077A"; // Insert your Client ID Here!
 int status = WL_IDLE_STATUS;
+
+// char serverAddress[] = "34.28.153.91";  // server address
+// int port = 80;
+// WiFiClient wifi;
+// WebSocketClient client = WebSocketClient(wifi, serverAddress, port);
+// String clientID = "89C87865077A"; // Insert your Client ID Here!
+// int status = WL_IDLE_STATUS;
 
 // =========================
 // State Machine
@@ -23,7 +35,19 @@ unsigned char currentState = state0;
 // =========================
 // Obstacle Detection
 // =========================
-constexpr int THRESHOLD = 600;     // stop/avoid when sensor > 400
+constexpr int THRESHOLD = 550;     // stop/avoid when sensor > 400
+
+// =========================
+// Color Sensor
+// =========================
+Color detectedColor = OTHER;  // color detected by sensor
+Color detectedColor2 = OTHER; // color detected by second sensor
+int deg = 0;   // angle in degrees
+int deg2 = 0;  // angle in degrees for second sensor
+int mag = 0;   // magnitude
+int mag2 = 0;  // magnitude for second sensor
+
+int timer = 0; // timer for color reading intervals
 
 
 // =========================
@@ -58,8 +82,13 @@ void wifiConnect() {
 // Setup
 // =========================
 void setup() {
+  colorSetup(); // Initialize color sensor
+
+
   Serial.begin(9600);
-  while (!Serial) {;}
+
+   
+  // while (!Serial) {;}
 
   motorSetup();
 
@@ -83,46 +112,71 @@ void loop() {
   client.print(clientID);
   client.endMessage();
 
-  while (client.connected()) {
+  changeState(1); 
+
+  // int sensorValue = analogRead(dividerIn);
+  //  Serial.print("IR Sensor Value: ");
+  //   Serial.println(sensorValue);
+
+// client.connected()
+  while (1) {
+    // colorLoop(detectedColor, detectedColor2, deg, deg2, mag, mag2); // Read color sensor values
+
     // --- Read IR sensor and print ---
+
     int sensorValue = analogRead(dividerIn);
-    Serial.print("IR Sensor Value: ");
-    Serial.println(sensorValue);
+
+
+    // if (timer == 10) { // send every 1 second
+    //   timer = 0;
+      client.beginMessage(TYPE_TEXT);
+      // client.print("Detected Color1: ");
+      // client.println(detectedColor);
+      // client.print("Detected Color2: ");
+      // client.println(detectedColor2);
+      // client.print(mag);
+      // client.print(", ");
+      // client.print(deg);
+      // client.print("      ");
+
+      // client.print(mag2);
+      // client.print(", ");
+      // client.println(deg2);
+      client.print(sensorValue);
+      client.endMessage();
+    // }
+    // timer++;
+    
+    // delay(1000); // send every 100ms
+    // Serial.print("IR Sensor Value: ");
+    // Serial.println(sensorValue);
 
     // --- Obstacle avoidance logic ---
     if (currentState == state1 && sensorValue > THRESHOLD) {
-      Serial.println("Obstacle detected! Stopping.");
+      // Serial.println("Obstacle detected! Stopping.");
       stop(); //stop 
       delay(1000); // wait 1 second
       backward(100); // back up
       delay(2000); // back up for 2 seconds
       pivot_clockwise(); // pivot clockwise to avoid
-      delay(1500); // pivot for 1.5 seconds
+      delay(1750); // pivot for 1.5 seconds
       forward(100); // resume forward
     }
 
-
-
-
-
-
-
-
-
     // --- Handle incoming WebSocket messages ---
-    int msgSize = client.parseMessage();
-    if (msgSize > 0) {
-      String msg = client.readString();
-      int pos = msg.indexOf('.');
-      if (pos != -1) {
-        String stateStr = msg.substring(pos + 1);
-        if (stateStr.startsWith("RIDJ")) {
-          stateStr = stateStr.substring(5); 
-          int stateNum = stateStr.toInt();
-          changeState(stateNum);
-        }
-      }
-    }
+    // int msgSize = client.parseMessage();
+    // if (msgSize > 0) {
+    //   String msg = client.readString();
+    //   int pos = msg.indexOf('.');
+    //   if (pos != -1) {
+    //     String stateStr = msg.substring(pos + 1);
+    //     if (stateStr.startsWith("RIDJ")) {
+    //       stateStr = stateStr.substring(5); 
+    //       int stateNum = stateStr.toInt();
+    //       changeState(stateNum);
+    //     }
+    //   }
+    // }
 
     // isObstacleDetected();
 
@@ -133,8 +187,8 @@ void loop() {
       case state2:  backward(100);          break;
       case state3:  pivot_clockwise();      break;
       case state4:  pivot_counter();        break;
-      case state5:  turn_right(200);        break;
-      case state6:  turn_left(200);         break;
+      case state5:  turn_right(100);        break;
+      case state6:  turn_left(100);         break;
     }
   }
 
