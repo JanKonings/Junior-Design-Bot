@@ -35,7 +35,7 @@ unsigned char currentState = state0;
 // =========================
 // Obstacle Detection
 // =========================
-constexpr int THRESHOLD = 550;     // stop/avoid when sensor > 400
+constexpr int THRESHOLD = 360;     // stop/avoid when sensor > 400
 
 // =========================
 // Color Sensor
@@ -120,7 +120,7 @@ void loop() {
 
 // client.connected()
   while (1) {
-    // colorLoop(detectedColor, detectedColor2, deg, deg2, mag, mag2); // Read color sensor values
+    colorLoop(detectedColor, detectedColor2, deg, deg2, mag, mag2); // Read color sensor values
 
     // --- Read IR sensor and print ---
 
@@ -152,7 +152,7 @@ void loop() {
     // Serial.println(sensorValue);
 
     // --- Obstacle avoidance logic ---
-    if (currentState == state1 && sensorValue > THRESHOLD) {
+    if (currentState == state1 && sensorValue < THRESHOLD) {
       // Serial.println("Obstacle detected! Stopping.");
       stop(); //stop 
       delay(1000); // wait 1 second

@@ -1,8 +1,6 @@
 #include <WiFiNINA.h>
 #include <ArduinoHttpClient.h>
-
-constexpr int dividerIn = A1;
-constexpr int IRled = 11;
+#include "obstacleDetecting.h"
 
 void obstacleDetectingSetup() {
   pinMode(dividerIn, INPUT);

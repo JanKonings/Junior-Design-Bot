@@ -1,10 +1,10 @@
 #include "colorsensor.h"
 
 
-const int redLED = 2;
-const int blueLED = 3;
-const int sensorPinL = A2;
-const int sensorPinR = A3;
+const int redLED = 13;
+const int blueLED = 12;
+const int sensorPinL = A0;
+const int sensorPinR = A5;
 
 int ambValue = 0;
 int redValue = 0;
@@ -89,16 +89,16 @@ void colorLoop(Color &detected, Color &detected2, int &deg, int &deg2, int &mag,
   // Serial.print(", ");
   // Serial.println(ydiff);
 
-  if(mag < 60) {
+  if(mag <= 35) {
     detected = BLACK;
     Serial.print("BLACK       ");
-  } else if (deg > 0 && deg <= 25) {
+  } else if (deg > 20 && deg <= 60) {
     detected = RED; 
     Serial.print("RED     ");
-  } else if (deg > 25 && deg <= 45) {
+  } else if (deg > 0 && deg <= 20) {
     detected = YELLOW;
     Serial.print("YELLOW        ");
-  } else if (deg > 45) {
+  } else if (deg > 60) {
     detected = BLUE;
     Serial.print("BLUE        ");
   } else {
@@ -106,16 +106,16 @@ void colorLoop(Color &detected, Color &detected2, int &deg, int &deg2, int &mag,
     Serial.print("OTHER       ");
   }
 
-    if(mag2 < 60) {
+  if(mag2 <= 35) {
     detected2 = BLACK;
     Serial.println("BLACK");
-  } else if (deg2 > 0 && deg2 <= 25) {
+  } else if (deg2 > 20 && deg2 <= 60) {
     detected2 = RED; 
     Serial.println("RED");
-  } else if (deg2 > 25 && deg2 <= 45) {
+  } else if (deg2 > 0 && deg2 <= 20) {
     detected2 = YELLOW;
     Serial.println("YELLOW");
-  } else if (deg2 > 45) {
+  } else if (deg2 > 60) {
     detected2 = BLUE;
     Serial.println("BLUE");
   } else {

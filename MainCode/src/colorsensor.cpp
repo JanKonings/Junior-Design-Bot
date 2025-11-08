@@ -1,14 +1,42 @@
 #include "colorsensor.h"
 
+
+const int redLED = 13;
+const int blueLED = 12;
+const int sensorPinL = A0;
+const int sensorPinR = A5;
+
+int ambValue = 0;
+int redValue = 0;
+int blueValue = 0;
+
+int ydiff = 0;
+int xdiff = 0;
+
+// int mag = 0;
+float rads = 0;
+// float deg = 0;
+
+int ambValue2 = 0;
+int redValue2 = 0;
+int blueValue2 = 0;
+
+int ydiff2 = 0;
+int xdiff2 = 0;
+
+// int mag2 = 0;
+float rads2 = 0;
+// float deg2 = 0;
+
 void colorSetup() {
   pinMode(redLED, OUTPUT);
   pinMode(blueLED, OUTPUT);
   Serial.begin(9600);
 }
 
-void colorLoop() {
-  Color detected = OTHER;
-  Color detected2 = OTHER;
+void colorLoop(Color &detected, Color &detected2, int &deg, int &deg2, int &mag, int &mag2) {
+  detected = OTHER;
+  detected2 = OTHER;
 
   // Red ambient light
   digitalWrite(redLED, LOW);
@@ -61,16 +89,16 @@ void colorLoop() {
   // Serial.print(", ");
   // Serial.println(ydiff);
 
-  if(mag < 80) {
+  if(mag <= 35) {
     detected = BLACK;
     Serial.print("BLACK       ");
-  } else if (deg > 0 && deg <= 20) {
+  } else if (deg > 20 && deg <= 60) {
     detected = RED; 
     Serial.print("RED     ");
-  } else if (deg > 20 && deg <= 45) {
+  } else if (deg > 0 && deg <= 20) {
     detected = YELLOW;
     Serial.print("YELLOW        ");
-  } else if (deg > 45) {
+  } else if (deg > 60) {
     detected = BLUE;
     Serial.print("BLUE        ");
   } else {
@@ -78,16 +106,16 @@ void colorLoop() {
     Serial.print("OTHER       ");
   }
 
-    if(mag2 < 80) {
+  if(mag2 <= 35) {
     detected2 = BLACK;
     Serial.println("BLACK");
-  } else if (deg2 > 0 && deg2 <= 15) {
+  } else if (deg2 > 20 && deg2 <= 60) {
     detected2 = RED; 
     Serial.println("RED");
-  } else if (deg2 > 15 && deg2 <= 35) {
+  } else if (deg2 > 0 && deg2 <= 20) {
     detected2 = YELLOW;
     Serial.println("YELLOW");
-  } else if (deg2 > 35) {
+  } else if (deg2 > 60) {
     detected2 = BLUE;
     Serial.println("BLUE");
   } else {
@@ -103,5 +131,4 @@ void colorLoop() {
   Serial.print(mag2);
   Serial.print(", ");
   Serial.println(deg2);
-
 } 

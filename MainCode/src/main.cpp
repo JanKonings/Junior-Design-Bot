@@ -1,144 +1,194 @@
 #include "motorControl.h"
-/////// you can enter your sensitive data in the Secret tab/arduino_secrets.h
-/////// WiFi Settings ///////
+#include "obstacleDetecting.h"
+#include "colorsensor.h"
+
+
+
+#include <WiFiNINA.h>
+
+// =========================
+// WiFi / WebSocket Setup
+// =========================
 char ssid[] = "tufts_eecs";
 char pass[] = "foundedin1883";
 
-//websocket connection code
-char serverAddress[] = "34.28.153.91";  // server address
-int port = 80;
+char serverAddress[] = "10.5.12.247";  // server address
+int port = 8080;
 WiFiClient wifi;
 WebSocketClient client = WebSocketClient(wifi, serverAddress, port);
-String clientID = "89C87865077A"; //Insert your Client ID Here!
+String clientID = "89C87865077A"; // Insert your Client ID Here!
 int status = WL_IDLE_STATUS;
-int count = 0;
+
+// char serverAddress[] = "34.28.153.91";  // server address
+// int port = 80;
+// WiFiClient wifi;
+// WebSocketClient client = WebSocketClient(wifi, serverAddress, port);
+// String clientID = "89C87865077A"; // Insert your Client ID Here!
+// int status = WL_IDLE_STATUS;
+
+// =========================
+// State Machine
+// =========================
+enum { state0, state1, state2, state3, state4, state5, state6 };
+unsigned char currentState = state0;  
+
+// =========================
+// Obstacle Detection
+// =========================
+constexpr int THRESHOLD = 360;     // stop/avoid when sensor > 400
+
+// =========================
+// Color Sensor
+// =========================
+Color detectedColor = OTHER;  // color detected by sensor
+Color detectedColor2 = OTHER; // color detected by second sensor
+int deg = 0;   // angle in degrees
+int deg2 = 0;  // angle in degrees for second sensor
+int mag = 0;   // magnitude
+int mag2 = 0;  // magnitude for second sensor
+
+int timer = 0; // timer for color reading intervals
 
 
-// code for the state machine
-const unsigned char buttonInput = 2;
-enum {state0, state1, state2, state3, state4, state5, state6};
-volatile unsigned char currentState = state0;  // volatile: used inside ISR
-
-//for LED interrupt
-unsigned long lastInterruptTime = 0;  // for debouncing
-
-
-
-// Interrupt Service Routine (ISR) for button press
-void buttonISR() {
-  unsigned long currentTime = millis();
-  if (currentTime - lastInterruptTime > 200) { // debounce (200 ms)
-    // Advance to the next state
-    switch (currentState) {
-      case state0: currentState = state1; break;
-      case state1: currentState = state2; break;
-      case state2: currentState = state3; break;
-      case state3: currentState = state4; break;
-      case state4: currentState = state5; break;
-      case state5: currentState = state6; break;
-      case state6: currentState = state0; break;
-    }
-    Serial.print("Interrupt: Button pressed. New state = ");
-    Serial.println(currentState);
-    lastInterruptTime = currentTime;
-  }
-}
-
-void setup() {
-
-  motorSetup();
-  pinMode(LED_BUILTIN, OUTPUT);
-  pinMode(buttonInput, INPUT_PULLUP);
-
-  Serial.begin(9600);
-  while (!Serial) {;}
-  Serial.println("Setup complete. Starting in state0.");
-
-  // Attach interrupt on falling edge (button press)
-  attachInterrupt(digitalPinToInterrupt(buttonInput), buttonISR, FALLING);
-
-  //Serial.begin(9600);
-  while ( status != WL_CONNECTED) {
-    Serial.print("Attempting to connect to Network named: ");
-    Serial.println(ssid);                   // print the network name (SSID);
-
-    // Connect to WPA/WPA2 network:
-    status = WiFi.begin(ssid, pass);
-  }
-
-  // print the SSID of the network you're attached to:
-  Serial.print("SSID: ");
-  Serial.println(WiFi.SSID());
-
-  // print your WiFi shield's IP address:
-  IPAddress ip = WiFi.localIP();
-  Serial.print("IP Address: ");
-  Serial.println(ip);
-}
-
-
-
+// =========================
+// Helpers
+// =========================
 void changeState(unsigned char newState) {
-  if (newState > state6 || newState < state0) {
+  if (newState > state6) {
     Serial.println("Invalid state. State unchanged.");
     return;
   }
-
   currentState = newState;
   Serial.print("State changed to ");
   Serial.println(currentState);
 }
 
-//LED blinking function
-void handleBlink(int times) {
-  for (int i = 0; i < times; i++) {
-    digitalWrite(LED_BUILTIN, HIGH);
-    delay(100);
-    digitalWrite(LED_BUILTIN, LOW);
-    delay(100);
+void wifiConnect() {
+  while (status != WL_CONNECTED) {
+    Serial.print("Attempting to connect to: ");
+    Serial.println(ssid);
+    status = WiFi.begin(ssid, pass);
+    delay(1000);
   }
+
+  Serial.print("SSID: ");
+  Serial.println(WiFi.SSID());
+  IPAddress ip = WiFi.localIP();
+  Serial.print("IP Address: ");
+  Serial.println(ip);
 }
 
+// =========================
+// Setup
+// =========================
+void setup() {
+  colorSetup(); // Initialize color sensor
 
+
+  Serial.begin(9600);
+
+   
+  // while (!Serial) {;}
+
+  motorSetup();
+
+  // LED + obstacle detection hardware
+  obstacleDetectingSetup();
+
+  Serial.println("Setup complete. Starting in state0.");
+
+  // Connect to WiFi
+  wifiConnect();
+}
+
+// =========================
+// Main Loop
+// =========================
 void loop() {
-
-  // start Websocket Client
+  // Start (or restart) WebSocket session
   Serial.println("starting WebSocket client");
   client.begin();
   client.beginMessage(TYPE_TEXT);
   client.print(clientID);
   client.endMessage();
 
-  while (client.connected()) {
-    int blinkTimes = currentState; // state0=1 blink, state6=7 blinks
-    handleBlink(blinkTimes);
-    delay(1000);
+  changeState(1); 
 
-    int msgSize = client.parseMessage();
-    if (msgSize > 0) {
-      String msg = client.readString();
-      int pos = msg.indexOf('.');
-      int stateNum = 0;
+  // int sensorValue = analogRead(dividerIn);
+  //  Serial.print("IR Sensor Value: ");
+  //   Serial.println(sensorValue);
 
-      if(pos != -1) {
-        String stateStr = msg.substring(pos + 1);
-        if(stateStr.startsWith("RIDJ")) {
-          stateStr = stateStr.substring(5); // Extract the number after "RIDJ "
-          stateNum = stateStr.toInt();
-          changeState(stateNum);
-        }
-      }
+// client.connected()
+  while (1) {
+    colorLoop(detectedColor, detectedColor2, deg, deg2, mag, mag2); // Read color sensor values
+
+    // --- Read IR sensor and print ---
+
+    int sensorValue = analogRead(dividerIn);
+
+
+    // if (timer == 10) { // send every 1 second
+    //   timer = 0;
+      client.beginMessage(TYPE_TEXT);
+      // client.print("Detected Color1: ");
+      // client.println(detectedColor);
+      // client.print("Detected Color2: ");
+      // client.println(detectedColor2);
+      // client.print(mag);
+      // client.print(", ");
+      // client.print(deg);
+      // client.print("      ");
+
+      // client.print(mag2);
+      // client.print(", ");
+      // client.println(deg2);
+      client.print(sensorValue);
+      client.endMessage();
+    // }
+    // timer++;
+    
+    // delay(1000); // send every 100ms
+    // Serial.print("IR Sensor Value: ");
+    // Serial.println(sensorValue);
+
+    // --- Obstacle avoidance logic ---
+    if (currentState == state1 && sensorValue < THRESHOLD) {
+      // Serial.println("Obstacle detected! Stopping.");
+      stop(); //stop 
+      delay(1000); // wait 1 second
+      backward(100); // back up
+      delay(2000); // back up for 2 seconds
+      pivot_clockwise(); // pivot clockwise to avoid
+      delay(1750); // pivot for 1.5 seconds
+      forward(100); // resume forward
     }
 
+    // --- Handle incoming WebSocket messages ---
+    // int msgSize = client.parseMessage();
+    // if (msgSize > 0) {
+    //   String msg = client.readString();
+    //   int pos = msg.indexOf('.');
+    //   if (pos != -1) {
+    //     String stateStr = msg.substring(pos + 1);
+    //     if (stateStr.startsWith("RIDJ")) {
+    //       stateStr = stateStr.substring(5); 
+    //       int stateNum = stateStr.toInt();
+    //       changeState(stateNum);
+    //     }
+    //   }
+    // }
 
+    // isObstacleDetected();
+
+    // --- Drive motors based on state ---
     switch (currentState) {
-      case state0:  stop();                break; // idle
-      case state1:  forward(100);                   break;
-      case state2:  backward(100);                  break;
-      case state3:  pivot_clockwise();           break;
-      case state4:  pivot_counter();             break;
-      case state5:  turn_right(200);                break;
-      case state6:  turn_left(200);                 break;
+      case state0:  stop();                 break; // idle
+      case state1:  forward(100);           break;
+      case state2:  backward(100);          break;
+      case state3:  pivot_clockwise();      break;
+      case state4:  pivot_counter();        break;
+      case state5:  turn_right(100);        break;
+      case state6:  turn_left(100);         break;
     }
   }
 

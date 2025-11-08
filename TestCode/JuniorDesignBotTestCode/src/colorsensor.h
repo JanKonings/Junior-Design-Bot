@@ -9,6 +9,9 @@ enum Color {
   BLACK,
   OTHER
 };
+// Black < 45, degree 45-50
+// Blue > 65
+// 
 
 void colorSetup();
 void colorLoop(Color &detected, Color &detected2, int &deg, int &deg2, int &mag, int &mag2);

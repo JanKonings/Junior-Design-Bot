@@ -26,8 +26,8 @@ void stopLeft() {
 }
 
 void startRightForward(int speed) {
-    digitalWrite(BI1, HIGH);
-    digitalWrite(BI2, LOW);
+    digitalWrite(BI1, LOW);
+    digitalWrite(BI2, HIGH);
     analogWrite(PWMB, speed);
 
 }
@@ -39,8 +39,8 @@ void startLeftForward(int speed) {
 }
 
 void startRightBackward(int speed) {
-    digitalWrite(BI1, LOW);
-    digitalWrite(BI2, HIGH);
+    digitalWrite(BI1, HIGH);
+    digitalWrite(BI2, LOW);
     analogWrite(PWMB, speed);
 }
 
