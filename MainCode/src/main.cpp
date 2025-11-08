@@ -1,9 +1,6 @@
 #include "motorControl.h"
 #include "obstacleDetecting.h"
 #include "colorsensor.h"
-
-
-
 #include <WiFiNINA.h>
 
 // =========================
@@ -12,12 +9,17 @@
 char ssid[] = "tufts_eecs";
 char pass[] = "foundedin1883";
 
+
+// our own WEBSOCKET
+
 char serverAddress[] = "10.5.12.247";  // server address
 int port = 8080;
 WiFiClient wifi;
 WebSocketClient client = WebSocketClient(wifi, serverAddress, port);
 String clientID = "89C87865077A"; // Insert your Client ID Here!
 int status = WL_IDLE_STATUS;
+
+// class WEBSOCKET
 
 // char serverAddress[] = "34.28.153.91";  // server address
 // int port = 80;
@@ -29,13 +31,27 @@ int status = WL_IDLE_STATUS;
 // =========================
 // State Machine
 // =========================
-enum { state0, state1, state2, state3, state4, state5, state6 };
-unsigned char currentState = state0;  
+enum { 
+  state0_idle,              // idle / done
+  state1_cross_to_top,      // cross to opposite side until top wall
+  state2_return_find_red,   // drive back until red lane
+  state3_follow_red_to_wall,// follow red until right wall
+  state4_find_yellow,       // after left turn, search for yellow lane
+  state5_follow_yellow_to_wall,// follow yellow until left wall
+  state6_go_home            // turn left + go back to start
+ };
+
+unsigned char currentState = state0_idle;  
 
 // =========================
 // Obstacle Detection
 // =========================
-constexpr int THRESHOLD = 360;     // stop/avoid when sensor > 400
+constexpr int THRESHOLD = 360;    
+
+bool atWall() {
+  int sensorValue = analogRead(dividerIn);
+  return sensorValue > THRESHOLD;
+}
 
 // =========================
 // Color Sensor
@@ -47,35 +63,48 @@ int deg2 = 0;  // angle in degrees for second sensor
 int mag = 0;   // magnitude
 int mag2 = 0;  // magnitude for second sensor
 
-int timer = 0; // timer for color reading intervals
+
+bool seeRed() {
+  return (detectedColor == RED || detectedColor2 == RED);
+}
+
+bool seeYellow() {
+  return (detectedColor == YELLOW || detectedColor2 == YELLOW);
+}
+
+// left sensor = detectedColor, right sensor = detectedColor2
+void followColor(Color target, int baseSpeed = 100, int turnSpeed = 90) {
+  bool leftOn  = (detectedColor  == target);
+  bool rightOn = (detectedColor2 == target);
+
+  if (leftOn && rightOn) {
+    forward(baseSpeed);
+  } else if (leftOn && !rightOn) {
+    turn_left(turnSpeed);
+  } else if (!leftOn && rightOn) {
+    turn_right(turnSpeed);
+  } else {
+    forward(baseSpeed / 2);
+  }
+}
 
 
 // =========================
 // Helpers
 // =========================
 void changeState(unsigned char newState) {
-  if (newState > state6) {
-    Serial.println("Invalid state. State unchanged.");
-    return;
-  }
+  if (newState > state6_go_home) return;
+
   currentState = newState;
-  Serial.print("State changed to ");
-  Serial.println(currentState);
 }
 
 void wifiConnect() {
   while (status != WL_CONNECTED) {
-    Serial.print("Attempting to connect to: ");
-    Serial.println(ssid);
     status = WiFi.begin(ssid, pass);
     delay(1000);
   }
 
-  Serial.print("SSID: ");
-  Serial.println(WiFi.SSID());
   IPAddress ip = WiFi.localIP();
-  Serial.print("IP Address: ");
-  Serial.println(ip);
 }
 
 // =========================
@@ -84,18 +113,12 @@ void wifiConnect() {
 void setup() {
   colorSetup(); // Initialize color sensor
 
-
   Serial.begin(9600);
-
-   
-  // while (!Serial) {;}
 
   motorSetup();
 
   // LED + obstacle detection hardware
   obstacleDetectingSetup();
-
-  Serial.println("Setup complete. Starting in state0.");
 
   // Connect to WiFi
   wifiConnect();
@@ -105,92 +128,132 @@ void setup() {
 // Main Loop
 // =========================
 void loop() {
-  // Start (or restart) WebSocket session
-  Serial.println("starting WebSocket client");
-  client.begin();
-  client.beginMessage(TYPE_TEXT);
-  client.print(clientID);
-  client.endMessage();
+  // connect
+  if (!client.connected()) {
+    client.begin();
+  }
 
   changeState(1); 
 
-  // int sensorValue = analogRead(dividerIn);
-  //  Serial.print("IR Sensor Value: ");
-  //   Serial.println(sensorValue);
-
-// client.connected()
   while (1) {
-    colorLoop(detectedColor, detectedColor2, deg, deg2, mag, mag2); // Read color sensor values
-
-    // --- Read IR sensor and print ---
-
+    // Update sensors
+    colorLoop(detectedColor, detectedColor2, deg, deg2, mag, mag2);
     int sensorValue = analogRead(dividerIn);
 
-
-    // if (timer == 10) { // send every 1 second
-    //   timer = 0;
-      client.beginMessage(TYPE_TEXT);
-      // client.print("Detected Color1: ");
-      // client.println(detectedColor);
-      // client.print("Detected Color2: ");
-      // client.println(detectedColor2);
-      // client.print(mag);
-      // client.print(", ");
-      // client.print(deg);
-      // client.print("      ");
-
-      // client.print(mag2);
-      // client.print(", ");
-      // client.println(deg2);
-      client.print(sensorValue);
-      client.endMessage();
-    // }
-    // timer++;
-    
-    // delay(1000); // send every 100ms
-    // Serial.print("IR Sensor Value: ");
-    // Serial.println(sensorValue);
-
-    // --- Obstacle avoidance logic ---
-    if (currentState == state1 && sensorValue < THRESHOLD) {
-      // Serial.println("Obstacle detected! Stopping.");
-      stop(); //stop 
-      delay(1000); // wait 1 second
-      backward(100); // back up
-      delay(2000); // back up for 2 seconds
-      pivot_clockwise(); // pivot clockwise to avoid
-      delay(1750); // pivot for 1.5 seconds
-      forward(100); // resume forward
-    }
-
-    // --- Handle incoming WebSocket messages ---
-    // int msgSize = client.parseMessage();
-    // if (msgSize > 0) {
-    //   String msg = client.readString();
-    //   int pos = msg.indexOf('.');
-    //   if (pos != -1) {
-    //     String stateStr = msg.substring(pos + 1);
-    //     if (stateStr.startsWith("RIDJ")) {
-    //       stateStr = stateStr.substring(5); 
-    //       int stateNum = stateStr.toInt();
-    //       changeState(stateNum);
-    //     }
-    //   }
-    // }
-
-    // isObstacleDetected();
-
-    // --- Drive motors based on state ---
     switch (currentState) {
-      case state0:  stop();                 break; // idle
-      case state1:  forward(100);           break;
-      case state2:  backward(100);          break;
-      case state3:  pivot_clockwise();      break;
-      case state4:  pivot_counter();        break;
-      case state5:  turn_right(100);        break;
-      case state6:  turn_left(100);         break;
-    }
-  }
 
-  Serial.println("disconnected");
+      // ======================
+      // 0: Idle (end state)
+      // ======================
+      case state0_idle:
+        stop();
+        break;
+
+      // ======================
+      // 1: Cross to the other side
+      // Stop at top wall, turn around
+      // ======================
+      case state1_cross_to_top:
+        forward(100);
+
+        if (sensorValue < THRESHOLD) {      // top wall
+          stop();
+          delay(300);
+
+          // 180° turn (tune delay for your bot)
+          pivot_clockwise();
+          delay(3500);
+          stop();
+          delay(200);
+
+          changeState(state2_return_find_red);
+        }
+        break;
+
+      // ======================
+      // 2: Cross back to find red lane
+      // ======================
+      case state2_return_find_red:
+        forward(110);
+
+        if (seeRed()) {
+          stop();
+          delay(200);
+          changeState(state3_follow_red_to_wall);
+        }
+        break;
+
+      // ======================
+      // 3: Follow red lane until wall at the right
+      // (We assume navigating forward; wall trigger ends this phase)
+      // ======================
+      case state3_follow_red_to_wall:
+        followColor(RED, 105, 95);
+
+        if (sensorValue > THRESHOLD) {    // hit right-side wall area
+          stop();
+          delay(300);
+
+          // Turn left to face toward yellow-lane region
+          pivot_counter();
+          delay(350);   // ~90° left (tune)
+          stop();
+          delay(200);
+
+          changeState(state4_find_yellow);
+        }
+        break;
+
+      // ======================
+      // 4: Find yellow lane
+      // ======================
+      case state4_find_yellow:
+        forward(100);
+
+        if (seeYellow()) {
+          stop();
+          delay(200);
+          changeState(state5_follow_yellow_to_wall);
+        }
+        break;
+
+      // ======================
+      // 5: Follow yellow lane until wall at the left
+      // ======================
+      case state5_follow_yellow_to_wall:
+        followColor(YELLOW, 105, 95);
+
+        if (sensorValue > THRESHOLD) {  // left-side wall
+          stop();
+          delay(300);
+
+          // Turn left again to face "home" direction
+          pivot_counter();
+          delay(350);  // ~90° (tune)
+          stop();
+          delay(200);
+
+          changeState(state6_go_home);
+        }
+        break;
+
+      // ======================
+      // 6: Return to starting position
+      // Here I’m assuming you drive straight until bottom wall.
+      // ======================
+      case state6_go_home:
+        forward(110);
+
+        if (sensorValue > THRESHOLD) {  // back at starting wall
+          stop();
+          delay(300);
+          changeState(state0_idle);
+        }
+        break;
+    }
+
+    // small delay for stability
+    delay(10);
+  }
 }
+
