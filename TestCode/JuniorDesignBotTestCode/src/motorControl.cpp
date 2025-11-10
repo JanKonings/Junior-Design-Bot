@@ -70,13 +70,24 @@ void pivot_counter() {
 }
 
 void turn_right(int speedLeft) {
-    startLeftForward(speedLeft);
-    startRightForward(100);
+    startLeftForward(100);
+    startRightForward(speedLeft);
 }
 
 void turn_left(int speedRight) {
-    startRightForward(speedRight);
-    startLeftForward(100);
+    startRightForward(100);
+    startLeftForward(speedRight);
+}
+
+//for new orienattion
+void turn_right_backward(int speedLeft) {
+    startLeftBackward(speedLeft);
+    startRightBackward(100);
+}
+
+void turn_left_backward(int speedRight) {
+    startRightBackward(speedRight);
+    startLeftBackward(100);
 }
 
 

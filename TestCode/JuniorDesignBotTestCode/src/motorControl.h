@@ -32,6 +32,9 @@ void pivot_counter();
 void turn_right(int speedLeft);
 void turn_left(int speedRight);
 
+void turn_right_backward(int speedLeft);
+void turn_left_backward(int speedRight);
+
 void stop();
 
 void stopRight();

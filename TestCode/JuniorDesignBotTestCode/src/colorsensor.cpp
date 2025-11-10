@@ -1,8 +1,8 @@
 #include "colorsensor.h"
 
 
-const int redLED = 13;
-const int blueLED = 12;
+const int redLED = 12;
+const int blueLED = 11;
 const int sensorPinL = A0;
 const int sensorPinR = A5;
 
@@ -28,107 +28,122 @@ int xdiff2 = 0;
 float rads2 = 0;
 // float deg2 = 0;
 
+static Color stableL = OTHER;
+static Color stableR = OTHER;
+static Color prevMeasuredL = OTHER;
+static Color prevMeasuredR = OTHER;
+
 void colorSetup() {
   pinMode(redLED, OUTPUT);
   pinMode(blueLED, OUTPUT);
-  Serial.begin(9600);
+  // Serial.begin(9600);
+  Serial.begin(115200);
 }
 
 void colorLoop(Color &detected, Color &detected2, int &deg, int &deg2, int &mag, int &mag2) {
-  detected = OTHER;
-  detected2 = OTHER;
+  const int NUM_SAMPLES = 20;
 
-  // Red ambient light
-  digitalWrite(redLED, LOW);
-  digitalWrite(blueLED, LOW);
-  delay(100); // allow light to stabilize
-  ambValue = analogRead(sensorPinL);
-  ambValue2 = analogRead(sensorPinR);
+  float totalDeg  = 0, totalDeg2 = 0;
+  float totalMag  = 0, totalMag2 = 0;
 
-  // Read red reflectance
-  digitalWrite(redLED, HIGH);
-  digitalWrite(blueLED, LOW);
-  delay(100);
-  redValue = analogRead(sensorPinL);
-  redValue2 = analogRead(sensorPinR);
+  for (int i = 0; i < NUM_SAMPLES; i++) {
+    int ambL, redL, blueL;
+    int ambR, redR, blueR;
 
-  // Read blue reflectance
-  digitalWrite(redLED, LOW);
-  digitalWrite(blueLED, HIGH);
-  delay(100);
-  blueValue = analogRead(sensorPinL);
-  blueValue2 = analogRead(sensorPinR);
+    // Ambient
+    digitalWrite(redLED, LOW);
+    digitalWrite(blueLED, LOW);
+    delay(5);
+    ambL = analogRead(sensorPinL);
+    ambR = analogRead(sensorPinR);
 
-  // Turn off both LEDs
-  digitalWrite(redLED, LOW);
-  digitalWrite(blueLED, LOW);
+    // Red reflectance
+    digitalWrite(redLED, HIGH);
+    digitalWrite(blueLED, LOW);
+    delay(5);
+    redL = analogRead(sensorPinL);
+    redR = analogRead(sensorPinR);
 
-  // Print results
-  // Serial.print("Ambient: ");
-  // Serial.print(ambValue);
-  // Serial.print(" | Red: ");
-  // Serial.print(redValue);
-  // Serial.print(" | Blue: ");
-  // Serial.println(blueValue);
+    // Blue reflectance
+    digitalWrite(redLED, LOW);
+    digitalWrite(blueLED, HIGH);
+    delay(5);
+    blueL = analogRead(sensorPinL);
+    blueR = analogRead(sensorPinR);
 
-  ydiff = abs(blueValue - ambValue);
-  xdiff = abs(redValue - ambValue);
-  ydiff2 = abs(blueValue2 - ambValue2);
-  xdiff2 = abs(redValue2 - ambValue2);
+    // Turn off LEDs
+    digitalWrite(redLED, LOW);
+    digitalWrite(blueLED, LOW);
 
-  mag = sqrt(sq(ydiff) + sq(xdiff));
-  rads = atan2(ydiff, xdiff);
-  deg = degrees(rads);
-  mag2 = sqrt(sq(ydiff2) + sq(xdiff2));
-  rads2 = atan2(ydiff2, xdiff2);
-  deg2 = degrees(rads2);
+    // Differences
+    int ydiffL = abs(blueL - ambL);
+    int xdiffL = abs(redL - ambL);
+    int ydiffR = abs(blueR - ambR);
+    int xdiffR = abs(redR - ambR);
 
-  // // Print cords
-  // Serial.print("Decision Space: ");
-  // Serial.print(xdiff);
-  // Serial.print(", ");
-  // Serial.println(ydiff);
+    float magL = sqrt(sq(ydiffL) + sq(xdiffL));
+    float magR = sqrt(sq(ydiffR) + sq(xdiffR));
+    float degL = degrees(atan2(ydiffL, xdiffL));
+    float degR = degrees(atan2(ydiffR, xdiffR));
 
-  if(mag <= 35) {
-    detected = BLACK;
-    Serial.print("BLACK       ");
-  } else if (deg > 20 && deg <= 60) {
-    detected = RED; 
-    Serial.print("RED     ");
-  } else if (deg > 0 && deg <= 20) {
-    detected = YELLOW;
-    Serial.print("YELLOW        ");
-  } else if (deg > 60) {
-    detected = BLUE;
-    Serial.print("BLUE        ");
-  } else {
-    detected = OTHER;
-    Serial.print("OTHER       ");
+    totalMag  += magL;
+    totalDeg  += degL;
+    totalMag2 += magR;
+    totalDeg2 += degR;
   }
 
-  if(mag2 <= 35) {
-    detected2 = BLACK;
-    Serial.println("BLACK");
-  } else if (deg2 > 20 && deg2 <= 60) {
-    detected2 = RED; 
-    Serial.println("RED");
-  } else if (deg2 > 0 && deg2 <= 20) {
-    detected2 = YELLOW;
-    Serial.println("YELLOW");
-  } else if (deg2 > 60) {
-    detected2 = BLUE;
-    Serial.println("BLUE");
-  } else {
-    detected2 = OTHER;
-    Serial.println("OTHER");
-  }
-  
-  Serial.print(mag);
-  Serial.print(", ");
-  Serial.print(deg);
-  Serial.print("      ");
+  // Averages
+  mag  = totalMag  / NUM_SAMPLES;
+  mag2 = totalMag2 / NUM_SAMPLES;
+  deg  = totalDeg  / NUM_SAMPLES;
+  deg2 = totalDeg2 / NUM_SAMPLES;
 
-  Serial.print(mag2);
-  Serial.print(", ");
-  Serial.println(deg2);
-} 
+  // ----- RAW COLOR DECISIONS (measured) -----
+  Color measuredL, measuredR;
+
+  // Left sensor
+  if (mag <= 13) {
+    measuredL = BLACK;
+  } else if (deg > 30 && deg < 65) {
+    measuredL = RED;
+  } else if (deg >= 65) {
+    measuredL = YELLOW;
+  } else if (deg > 0 && deg < 30) {
+    measuredL = BLUE;
+  } else {
+    measuredL = OTHER;
+  }
+
+  // Right sensor
+  if (mag2 <= 18) {
+    measuredR = BLACK;
+  } else if (deg2 > 30 && deg2 < 70) {
+    measuredR = RED;
+  } else if (deg2 >= 70) {
+    measuredR = YELLOW;
+  } else if (deg2 > 0 && deg2 <= 30) {
+    measuredR = BLUE;
+  } else {
+    measuredR = OTHER;
+  }
+
+  // ----- 2-READ CONFIRMATION (branch predictor style) -----
+  // Only change stable color if we see the same new color twice in a row
+
+  // if (measuredL == prevMeasuredL && measuredL != stableL) {
+  //   stableL = measuredL;
+  // }
+  // if (measuredR == prevMeasuredR && measuredR != stableR) {
+  //   stableR = measuredR;
+  // }
+
+  // prevMeasuredL = measuredL;
+  // prevMeasuredR = measuredR;
+
+  // Output the STABLE decision
+  // detected  = stableL;
+  // detected2 = stableR;
+
+  detected  = measuredL;
+  detected2 = measuredR;
+}
