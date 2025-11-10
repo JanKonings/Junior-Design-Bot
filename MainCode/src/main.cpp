@@ -12,7 +12,11 @@ char pass[] = "foundedin1883";
 
 // our own WEBSOCKET
 
-char serverAddress[] = "10.5.12.247";  // server address
+// char serverAddress[] = "10.5.12.247";  // server  (ISAACS COMPUTER)
+// char serverAddress[] = "10.5.14.180";  // server (JANS COMPUTER)
+char serverAddress[] = "10.5.8.205";  // server (DREWS COMPUTER)
+
+
 int port = 8080;
 WiFiClient wifi;
 WebSocketClient client = WebSocketClient(wifi, serverAddress, port);
@@ -32,13 +36,13 @@ int status = WL_IDLE_STATUS;
 // State Machine
 // =========================
 enum { 
-  state0_idle,              // idle / done
-  state1_cross_to_top,      // cross to opposite side until top wall
-  state2_return_find_red,   // drive back until red lane
-  state3_follow_red_to_wall,// follow red until right wall
-  state4_find_yellow,       // after left turn, search for yellow lane
-  state5_follow_yellow_to_wall,// follow yellow until left wall
-  state6_go_home            // turn left + go back to start
+  state0_idle,
+  state1_crossing,
+  state2_goRed,
+  state3_followRed,
+  state4_goYellow,
+  state5_followYellow,
+  state6_go_home
  };
 
 unsigned char currentState = state0_idle;  
@@ -46,12 +50,8 @@ unsigned char currentState = state0_idle;
 // =========================
 // Obstacle Detection
 // =========================
-constexpr int THRESHOLD = 360;    
+constexpr int THRESHOLD = 580;     // stop/avoid when sensor > 580
 
-bool atWall() {
-  int sensorValue = analogRead(dividerIn);
-  return sensorValue > THRESHOLD;
-}
 
 // =========================
 // Color Sensor
@@ -62,31 +62,7 @@ int deg = 0;   // angle in degrees
 int deg2 = 0;  // angle in degrees for second sensor
 int mag = 0;   // magnitude
 int mag2 = 0;  // magnitude for second sensor
-
-
-bool seeRed() {
-  return (detectedColor == RED || detectedColor2 == RED);
-}
-
-bool seeYellow() {
-  return (detectedColor == YELLOW || detectedColor2 == YELLOW);
-}
-
-// left sensor = detectedColor, right sensor = detectedColor2
-void followColor(Color target, int baseSpeed = 100, int turnSpeed = 90) {
-  bool leftOn  = (detectedColor  == target);
-  bool rightOn = (detectedColor2 == target);
-
-  if (leftOn && rightOn) {
-    forward(baseSpeed);
-  } else if (leftOn && !rightOn) {
-    turn_left(turnSpeed);
-  } else if (!leftOn && rightOn) {
-    turn_right(turnSpeed);
-  } else {
-    forward(baseSpeed / 2);
-  }
-}
+int sensorValue = 0;  // value from color sensor
 
 
 // =========================
@@ -129,131 +105,162 @@ void setup() {
 // =========================
 void loop() {
   // connect
-  if (!client.connected()) {
-    client.begin();
-  }
+  // if (!client.connected()) {
+  //   client.begin();
+  // }
+  client.begin();
+  client.beginMessage(TYPE_TEXT);
+  client.print("Here");
+  client.endMessage();
 
-  changeState(1); 
+  delay(3000); // wait for 10 seconds before starting
+  changeState(state1_crossing);
 
-  while (1) {
-    // Update sensors
-    colorLoop(detectedColor, detectedColor2, deg, deg2, mag, mag2);
-    int sensorValue = analogRead(dividerIn);
-
+  // while (client.connected())
+  while (true)
+  {
+    // client.beginMessage(TYPE_TEXT);
+    // client.println(currentState);
+    // client.endMessage();
+    // Serial.print("currentState = ");
+    // Serial.println(currentState);
+    // Serial.print("Wanted State = ");
+    // Serial.println(state1_crossing);
+    
     switch (currentState) {
-
-      // ======================
-      // 0: Idle (end state)
-      // ======================
-      case state0_idle:
+      case state0_idle: {
+        // Do nothing
         stop();
+
+        // --- Handle incoming WebSocket messages ---
+        int msgSize = client.parseMessage();
+        if (msgSize > 0) {
+          String msg = client.readString();
+          int pos = msg.indexOf('.');
+          if (pos != -1) {
+            String stateStr = msg.substring(pos + 1);
+            if (stateStr.startsWith("RIDJ")) {
+              stateStr = stateStr.substring(5); 
+              int stateNum = stateStr.toInt();
+              changeState(stateNum);
+            }
+          }
+        }
         break;
+      }
 
-      // ======================
-      // 1: Cross to the other side
-      // Stop at top wall, turn around
-      // ======================
-      case state1_cross_to_top:
+      case state1_crossing: {
+        // Cross intersection
+
+        sensorValue = analogRead(dividerIn);
+        // client.beginMessage(TYPE_TEXT);
+        // client.println(sensorValue);
+        // client.endMessage();
         forward(100);
-
-        if (sensorValue < THRESHOLD) {      // top wall
+        if (sensorValue > THRESHOLD) {
           stop();
-          delay(300);
-
-          // 180° turn (tune delay for your bot)
+          backward(100);
+          delay(500);
           pivot_clockwise();
-          delay(3500);
+          delay(2000);
           stop();
-          delay(200);
-
-          changeState(state2_return_find_red);
+          changeState(state2_goRed);
         }
         break;
+      }
 
-      // ======================
-      // 2: Cross back to find red lane
-      // ======================
-      case state2_return_find_red:
-        forward(110);
-
-        if (seeRed()) {
+      case state2_goRed: {
+        // Move towards red
+        colorLoop(detectedColor, detectedColor2, deg, deg2, mag, mag2);
+        if (detectedColor == RED || detectedColor2 == RED) {
           stop();
-          delay(200);
-          changeState(state3_follow_red_to_wall);
-        }
-        break;
-
-      // ======================
-      // 3: Follow red lane until wall at the right
-      // (We assume navigating forward; wall trigger ends this phase)
-      // ======================
-      case state3_follow_red_to_wall:
-        followColor(RED, 105, 95);
-
-        if (sensorValue > THRESHOLD) {    // hit right-side wall area
-          stop();
-          delay(300);
-
-          // Turn left to face toward yellow-lane region
           pivot_counter();
-          delay(350);   // ~90° left (tune)
+          delay(500);
           stop();
-          delay(200);
+          changeState(state3_followRed);
+        } 
+        break;
+      }
 
-          changeState(state4_find_yellow);
+      case state3_followRed: {
+        // Follow red line
+        // sensorValue = analogRead(dividerIn);
+
+        // if (sensorValue > THRESHOLD) {
+        //   stop();
+        //   backward(100);
+        //   delay(500);
+        //   pivot_counter();
+        //   delay(500);
+        //   stop();
+        //   changeState(state4_goYellow);
+        //   break;
+        // }
+
+        colorLoop(detectedColor, detectedColor2, deg, deg2, mag, mag2);
+        if(detectedColor == 0 && detectedColor2 == 0) {
+          forward(50);
+        } else if (detectedColor == 0 && detectedColor2 == 3) {
+          turn_right_backward(30);
+        } else if (detectedColor == 3 && detectedColor2 == 0) {
+          turn_left_backward(30);
+        } else {
+          stop();
         }
         break;
+      }
 
-      // ======================
-      // 4: Find yellow lane
-      // ======================
-      case state4_find_yellow:
-        forward(100);
-
-        if (seeYellow()) {
+      case state4_goYellow: {
+        // Move towards yellow
+        if (detectedColor == YELLOW || detectedColor2 == YELLOW) {
           stop();
-          delay(200);
-          changeState(state5_follow_yellow_to_wall);
-        }
-        break;
-
-      // ======================
-      // 5: Follow yellow lane until wall at the left
-      // ======================
-      case state5_follow_yellow_to_wall:
-        followColor(YELLOW, 105, 95);
-
-        if (sensorValue > THRESHOLD) {  // left-side wall
-          stop();
-          delay(300);
-
-          // Turn left again to face "home" direction
           pivot_counter();
-          delay(350);  // ~90° (tune)
+          delay(500);
           stop();
-          delay(200);
+          changeState(state5_followYellow);
+        }
+        break;
+      }
 
+      case state5_followYellow: {
+        // Follow yellow line
+        sensorValue = analogRead(dividerIn);
+
+        if (sensorValue > THRESHOLD) {
+          stop();
+          backward(100);
+          delay(500);
+          pivot_counter();
+          delay(500);
+          stop();
           changeState(state6_go_home);
+          break;
+        }
+
+        colorLoop(detectedColor, detectedColor2, deg, deg2, mag, mag2);
+        if(detectedColor == 2 && detectedColor2 == 2) {
+          forward(50);
+        } else if (detectedColor == 2 && detectedColor2 == 3) {
+          turn_right_backward(30);
+        } else if (detectedColor == 3 && detectedColor2 == 2) {
+          turn_left_backward(30);
+        } else {
+          stop();
         }
         break;
+      }
 
-      // ======================
-      // 6: Return to starting position
-      // Here I’m assuming you drive straight until bottom wall.
-      // ======================
-      case state6_go_home:
-        forward(110);
-
-        if (sensorValue > THRESHOLD) {  // back at starting wall
+      case state6_go_home: {
+        // Return to home base (assumed to be marked by both colors)
+        sensorValue = analogRead(dividerIn);
+        forward(100);
+        if (sensorValue > THRESHOLD) {
           stop();
-          delay(300);
           changeState(state0_idle);
         }
         break;
+      }
     }
-
-    // small delay for stability
-    delay(10);
   }
 }
 
