@@ -13,7 +13,7 @@ char ssid[] = "tufts_eecs";
 char pass[] = "foundedin1883";
 
 char serverAddress[] = "10.5.12.247";  // server  (ISAACS COMPUTER)
-// char serverAddress[] = "10.5.14.180";  // server (JANS COMPUTER)
+// char serverAddress[] = "10.243.65.242";  // server (JANS COMPUTER)
 
 int port = 8080;
 WiFiClient wifi;
@@ -37,13 +37,13 @@ unsigned char currentState = state0;
 // =========================
 // Obstacle Detection
 // =========================
-constexpr int THRESHOLD = 580;     // stop/avoid when sensor > 400
+constexpr int THRESHOLD = 690;     // stop/avoid when sensor > 400
 
 // =========================
 // Color Sensor
 // =========================
-Color detectedColor = OTHER;  // color detected by sensor
-Color detectedColor2 = OTHER; // color detected by second sensor
+Color Left = OTHER;  // color detected by sensor
+Color Right = OTHER; // color detected by second sensor
 int deg = 0;   // angle in degrees
 int deg2 = 0;  // angle in degrees for second sensor
 int mag = 0;   // magnitude
@@ -65,20 +65,20 @@ void changeState(unsigned char newState) {
   Serial.println(currentState);
 }
 
-// void wifiConnect() {
-//   while (status != WL_CONNECTED) {
-//     Serial.print("Attempting to connect to: ");
-//     Serial.println(ssid);
-//     status = WiFi.begin(ssid, pass);
-//     delay(1000);
-//   }
+void wifiConnect() {
+  while (status != WL_CONNECTED) {
+    Serial.print("Attempting to connect to: ");
+    Serial.println(ssid);
+    status = WiFi.begin(ssid, pass);
+    delay(1000);
+  }
 
-//   Serial.print("SSID: ");
-//   Serial.println(WiFi.SSID());
-//   IPAddress ip = WiFi.localIP();
-//   Serial.print("IP Address: ");
-//   Serial.println(ip);
-// }
+  Serial.print("SSID: ");
+  Serial.println(WiFi.SSID());
+  IPAddress ip = WiFi.localIP();
+  Serial.print("IP Address: ");
+  Serial.println(ip);
+}
 
 // =========================
 // Setup
@@ -101,7 +101,7 @@ void setup() {
   // Serial.println("Setup complete. Starting in state0.");
 
   // Connect to WiFi
-  // wifiConnect();
+  wifiConnect();
 }
 
 // =========================
@@ -110,12 +110,12 @@ void setup() {
 void loop() {
   // Start (or restart) WebSocket session
   // Serial.println("starting WebSocket client");
-  // client.begin();
+  client.begin();
   // client.beginMessage(TYPE_TEXT);
   // client.print(clientID);
   // client.endMessage();
 
-  // changeState(1); 
+  changeState(1); 
 
   // int sensorValue = analogRead(dividerIn);
   //  Serial.print("IR Sensor Value: ");
@@ -123,25 +123,27 @@ void loop() {
 
 // client.connected()
   while (1) {
-    colorLoop(detectedColor, detectedColor2, deg, deg2, mag, mag2); // Read color sensor values
+    colorLoop(Left, Right, deg, deg2, mag, mag2); // Read color sensor values
 
     // --- Read IR sensor and print ---
-    int sensorValue = analogRead(dividerIn);
+    // int sensorValue = analogRead(dividerIn);
+    // Serial.print("IR Sensor Value: ");
+    // Serial.println(sensorValue);
 
 
-    if(sensorValue < THRESHOLD) {
-      if(detectedColor == 1 && detectedColor2 == 1) {
+    // if(sensorValue < THRESHOLD) {
+      if(Left == 0 && Right == 0) {
         changeState(2);
-      } else if (detectedColor == 1 && detectedColor2 == 3) {
-        changeState(5);
-      } else if (detectedColor == 3 && detectedColor2 == 1) {
+      } else if (Left == 0 && Right == 3) {
         changeState(6);
+      } else if (Left == 3 && Right == 0) {
+        changeState(5);
       } else {
         changeState(0);
       }
-    } else {
-      changeState(0);
-    }
+    // } else {
+    //   changeState(0);
+    // }
 
 
 
@@ -149,20 +151,49 @@ void loop() {
     // if (timer == 10) { // send every 1 second
     //   timer = 0;
       // client.beginMessage(TYPE_TEXT);
-      // client.print("Detected Color1: ");
-      // client.println(detectedColor);
-      // client.print("Detected Color2: ");
-      // client.println(detectedColor2);
+      // client.print("Left: ");
+      // client.println(Left);
       // client.print(mag);
       // client.print(", ");
       // client.print(deg);
       // client.print("      ");
-
+      // client.print("\n");
+      // client.print("Right: ");
+      // client.println(Right);
       // client.print(mag2);
       // client.print(", ");
       // client.println(deg2);
-      // client.print(sensorValue);
+      // // client.print(sensorValue);
       // client.endMessage();
+
+
+      // for calibration:
+
+      client.beginMessage(TYPE_TEXT);
+      client.print(mag);
+      client.print(',');
+      client.print(deg);
+      client.print(',');
+      client.print(mag2);
+      client.print(',');
+      client.println(deg2);
+      client.endMessage();
+
+
+
+      // Serial.print("Detected Color1: ");
+      // Serial.println(detectedColor);
+      // Serial.print("Detected Color2: ");
+      // Serial.println(detectedColor2);
+      // Serial.print(mag);
+      // Serial.print(", ");
+      // Serial.print(deg);
+      // Serial.print("      ");
+
+      // Serial.print(mag2);
+      // Serial.print(", ");
+      // Serial.println(deg2);
+      // Serial.print(sensorValue);
     // }
     // timer++;
     
@@ -206,8 +237,8 @@ void loop() {
       case state2:  backward(75);          break;
       case state3:  pivot_clockwise();      break;
       case state4:  pivot_counter();        break;
-      case state5:  turn_right_backward(30);        break;
-      case state6:  turn_left_backward(30);         break;
+      case state5:  turn_right(17);        break;
+      case state6:  turn_left(17);         break;
     }
   }
 
