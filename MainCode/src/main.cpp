@@ -13,8 +13,8 @@ char pass[] = "foundedin1883";
 // our own WEBSOCKET
 
 // char serverAddress[] = "10.5.12.247";  // server  (ISAACS COMPUTER)
-// char serverAddress[] = "10.5.14.180";  // server (JANS COMPUTER)
-char serverAddress[] = "10.5.8.205";  // server (DREWS COMPUTER)
+char serverAddress[] = "10.243.65.242";  // server (JANS COMPUTER)
+// char serverAddress[] = "10.5.8.205";  // server (DREWS COMPUTER)
 
 
 int port = 8080;
@@ -50,18 +50,14 @@ unsigned char currentState = state0_idle;
 // =========================
 // Obstacle Detection
 // =========================
-constexpr int THRESHOLD = 580;     // stop/avoid when sensor > 580
+constexpr int THRESHOLD = 660;     // stop/avoid when sensor > 580
 
 
 // =========================
 // Color Sensor
 // =========================
-Color detectedColor = OTHER;  // color detected by sensor
-Color detectedColor2 = OTHER; // color detected by second sensor
-int deg = 0;   // angle in degrees
-int deg2 = 0;  // angle in degrees for second sensor
-int mag = 0;   // magnitude
-int mag2 = 0;  // magnitude for second sensor
+Color Left = OTHER;  // color detected by sensor
+Color Right = OTHER; // color detected by second sensor
 int sensorValue = 0;  // value from color sensor
 
 
@@ -114,14 +110,14 @@ void loop() {
   client.endMessage();
 
   delay(3000); // wait for 10 seconds before starting
-  changeState(state1_crossing);
+  changeState(state2_goRed); // start by going to red
 
   // while (client.connected())
   while (true)
   {
-    // client.beginMessage(TYPE_TEXT);
-    // client.println(currentState);
-    // client.endMessage();
+    client.beginMessage(TYPE_TEXT);
+    client.println(currentState);
+    client.endMessage();
     // Serial.print("currentState = ");
     // Serial.println(currentState);
     // Serial.print("Wanted State = ");
@@ -156,7 +152,7 @@ void loop() {
         // client.beginMessage(TYPE_TEXT);
         // client.println(sensorValue);
         // client.endMessage();
-        forward(100);
+        forward(75);
         if (sensorValue > THRESHOLD) {
           stop();
           backward(100);
@@ -166,16 +162,21 @@ void loop() {
           stop();
           changeState(state2_goRed);
         }
+
+        client.beginMessage(TYPE_TEXT);
+        client.println(sensorValue);
+        client.endMessage();
         break;
       }
 
       case state2_goRed: {
         // Move towards red
-        colorLoop(detectedColor, detectedColor2, deg, deg2, mag, mag2);
-        if (detectedColor == RED || detectedColor2 == RED) {
+        forward(50);
+        colorLoop(Left, Right);
+        if (Left == RED && Right == RED) {
           stop();
-          pivot_counter();
-          delay(500);
+          pivot_clockwise();
+          delay(1000);
           stop();
           changeState(state3_followRed);
         } 
@@ -197,13 +198,13 @@ void loop() {
         //   break;
         // }
 
-        colorLoop(detectedColor, detectedColor2, deg, deg2, mag, mag2);
-        if(detectedColor == 0 && detectedColor2 == 0) {
-          forward(50);
-        } else if (detectedColor == 0 && detectedColor2 == 3) {
-          turn_right_backward(30);
-        } else if (detectedColor == 3 && detectedColor2 == 0) {
-          turn_left_backward(30);
+        colorLoop(Left, Right);
+        if(Left == 0 && Right == 0) {
+          forward(75);
+        } else if (Left == 0 && Right == 3) {
+          turn_left(17);
+        } else if (Left == 3 && Right == 0) {
+          turn_right(17);
         } else {
           stop();
         }
@@ -212,7 +213,7 @@ void loop() {
 
       case state4_goYellow: {
         // Move towards yellow
-        if (detectedColor == YELLOW || detectedColor2 == YELLOW) {
+        if (Left == YELLOW || Right == YELLOW) {
           stop();
           pivot_counter();
           delay(500);
@@ -237,13 +238,13 @@ void loop() {
           break;
         }
 
-        colorLoop(detectedColor, detectedColor2, deg, deg2, mag, mag2);
-        if(detectedColor == 2 && detectedColor2 == 2) {
+        colorLoop(Left, Right);
+        if(Left == 2 && Right == 2) {
           forward(50);
-        } else if (detectedColor == 2 && detectedColor2 == 3) {
-          turn_right_backward(30);
-        } else if (detectedColor == 3 && detectedColor2 == 2) {
-          turn_left_backward(30);
+        } else if (Left == 2 && Right == 3) {
+          turn_left(17);
+        } else if (Left == 3 && Right == 2) {
+          turn_right(17);
         } else {
           stop();
         }

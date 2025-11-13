@@ -12,8 +12,8 @@
 char ssid[] = "tufts_eecs";
 char pass[] = "foundedin1883";
 
-char serverAddress[] = "10.5.12.247";  // server  (ISAACS COMPUTER)
-// char serverAddress[] = "10.243.65.242";  // server (JANS COMPUTER)
+// char serverAddress[] = "10.5.12.247";  // server  (ISAACS COMPUTER)
+char serverAddress[] = "10.243.65.242";  // server (JANS COMPUTER)
 
 int port = 8080;
 WiFiClient wifi;
@@ -37,7 +37,7 @@ unsigned char currentState = state0;
 // =========================
 // Obstacle Detection
 // =========================
-constexpr int THRESHOLD = 690;     // stop/avoid when sensor > 400
+constexpr int THRESHOLD = 660;     // stop/avoid when sensor > 400
 
 // =========================
 // Color Sensor
@@ -115,7 +115,7 @@ void loop() {
   // client.print(clientID);
   // client.endMessage();
 
-  changeState(1); 
+  // changeState(1); 
 
   // int sensorValue = analogRead(dividerIn);
   //  Serial.print("IR Sensor Value: ");
@@ -126,14 +126,14 @@ void loop() {
     colorLoop(Left, Right, deg, deg2, mag, mag2); // Read color sensor values
 
     // --- Read IR sensor and print ---
-    // int sensorValue = analogRead(dividerIn);
+    int sensorValue = analogRead(dividerIn);
     // Serial.print("IR Sensor Value: ");
     // Serial.println(sensorValue);
 
 
-    // if(sensorValue < THRESHOLD) {
+    if(sensorValue < THRESHOLD) {
       if(Left == 0 && Right == 0) {
-        changeState(2);
+        changeState(1);
       } else if (Left == 0 && Right == 3) {
         changeState(6);
       } else if (Left == 3 && Right == 0) {
@@ -141,9 +141,9 @@ void loop() {
       } else {
         changeState(0);
       }
-    // } else {
-    //   changeState(0);
-    // }
+    } else {
+      changeState(0);
+    }
 
 
 
@@ -163,21 +163,24 @@ void loop() {
       // client.print(mag2);
       // client.print(", ");
       // client.println(deg2);
-      // // client.print(sensorValue);
+
+
+      // client.beginMessage(TYPE_TEXT);
+      // client.print(sensorValue);
       // client.endMessage();
 
 
       // for calibration:
 
-      client.beginMessage(TYPE_TEXT);
-      client.print(mag);
-      client.print(',');
-      client.print(deg);
-      client.print(',');
-      client.print(mag2);
-      client.print(',');
-      client.println(deg2);
-      client.endMessage();
+      // client.beginMessage(TYPE_TEXT);
+      // client.print(mag);
+      // client.print(',');
+      // client.print(deg);
+      // client.print(',');
+      // client.print(mag2);
+      // client.print(',');
+      // client.println(deg2);
+      // client.endMessage();
 
 
 
@@ -233,7 +236,7 @@ void loop() {
     // --- Drive motors based on state ---
     switch (currentState) {
       case state0:  stop();                 break; // idle
-      case state1:  forward(50);           break;
+      case state1:  forward(75);           break;
       case state2:  backward(75);          break;
       case state3:  pivot_clockwise();      break;
       case state4:  pivot_counter();        break;

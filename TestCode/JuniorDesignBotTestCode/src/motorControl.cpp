@@ -61,12 +61,12 @@ void stop() {
 // B is LEFT motor
 void pivot_clockwise() {
     stopLeft();
-    startRightForward(100);
+    startRightBackward(100);
 }
 
 void pivot_counter() {
     stopRight();
-    startLeftForward(100);
+    startLeftBackward(100);
 }
 
 // void turn_right(int speedLeft) {

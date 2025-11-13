@@ -102,11 +102,11 @@ void colorLoop(Color &detected, Color &detected2, int &deg, int &deg2, int &mag,
   Color measuredL, measuredR;
 
   // LEFT sensor
-   if (mag <= 14) {
+   if (mag <= 18) {
     measuredL = BLACK;
-  } else if (deg >= 30 && deg < 75) {
+  } else if (deg >= 30 && deg < 73) {
     measuredL = RED;
-  } else if (deg >= 75) {
+  } else if (deg >= 73) {
     measuredL = YELLOW;
   } else if (deg > 0 && deg < 30) {
     measuredL = BLUE;
@@ -115,7 +115,7 @@ void colorLoop(Color &detected, Color &detected2, int &deg, int &deg2, int &mag,
   }
 
   // RIGHT sensor
-  if (mag2 <= 14) {
+  if (mag2 <= 13) {
     measuredR = BLACK;
   } else if (deg2 > 30 && deg2 < 65) {
     measuredR = RED;

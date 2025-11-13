@@ -14,4 +14,4 @@ enum Color {
 // 
 
 void colorSetup();
-void colorLoop(Color &detected, Color &detected2, int &deg, int &deg2, int &mag, int &mag2);
+void colorLoop(Color &detected, Color &detected2);

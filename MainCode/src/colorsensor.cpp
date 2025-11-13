@@ -3,8 +3,13 @@
 
 const int redLED = 12;
 const int blueLED = 11;
-const int sensorPinL = A0;
-const int sensorPinR = A5;
+const int sensorPinL = A3;
+const int sensorPinR = A0;
+
+int mag = 0;
+int mag2 = 0;
+int deg = 0;
+int deg2 = 0;
 
 int ambValue = 0;
 int redValue = 0;
@@ -37,11 +42,11 @@ void colorSetup() {
   pinMode(redLED, OUTPUT);
   pinMode(blueLED, OUTPUT);
   // Serial.begin(9600);
-  Serial.begin(115200);
+  // Serial.begin(115200);
 }
 
-void colorLoop(Color &detected, Color &detected2, int &deg, int &deg2, int &mag, int &mag2) {
-  const int NUM_SAMPLES = 20;
+void colorLoop(Color &detected, Color &detected2) {
+  const int NUM_SAMPLES = 25;
 
   float totalDeg  = 0, totalDeg2 = 0;
   float totalMag  = 0, totalMag2 = 0;
@@ -101,12 +106,12 @@ void colorLoop(Color &detected, Color &detected2, int &deg, int &deg2, int &mag,
   // ----- RAW COLOR DECISIONS (measured) -----
   Color measuredL, measuredR;
 
-  // Left sensor
-  if (mag <= 13) {
+  // LEFT sensor
+   if (mag <= 18) {
     measuredL = BLACK;
-  } else if (deg > 30 && deg < 65) {
+  } else if (deg >= 30 && deg < 73) {
     measuredL = RED;
-  } else if (deg >= 65) {
+  } else if (deg >= 73) {
     measuredL = YELLOW;
   } else if (deg > 0 && deg < 30) {
     measuredL = BLUE;
@@ -114,12 +119,12 @@ void colorLoop(Color &detected, Color &detected2, int &deg, int &deg2, int &mag,
     measuredL = OTHER;
   }
 
-  // Right sensor
-  if (mag2 <= 18) {
+  // RIGHT sensor
+  if (mag2 <= 13) {
     measuredR = BLACK;
-  } else if (deg2 > 30 && deg2 < 70) {
+  } else if (deg2 > 30 && deg2 < 65) {
     measuredR = RED;
-  } else if (deg2 >= 70) {
+  } else if (deg2 >= 65) {
     measuredR = YELLOW;
   } else if (deg2 > 0 && deg2 <= 30) {
     measuredR = BLUE;
