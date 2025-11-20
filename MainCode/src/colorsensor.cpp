@@ -6,6 +6,7 @@ const int blueLED = 11;
 const int sensorPinL = A3;
 const int sensorPinR = A0;
 
+/// DIFFERENT
 int mag = 0;
 int mag2 = 0;
 int deg = 0;
@@ -107,11 +108,11 @@ void colorLoop(Color &detected, Color &detected2) {
   Color measuredL, measuredR;
 
   // LEFT sensor
-   if (mag <= 18) {
+   if (mag <= 20) {
     measuredL = BLACK;
-  } else if (deg >= 30 && deg < 73) {
+  } else if (deg >= 30 && deg <= 73) {
     measuredL = RED;
-  } else if (deg >= 73) {
+  } else if (deg > 73) {
     measuredL = YELLOW;
   } else if (deg > 0 && deg < 30) {
     measuredL = BLUE;
@@ -120,11 +121,11 @@ void colorLoop(Color &detected, Color &detected2) {
   }
 
   // RIGHT sensor
-  if (mag2 <= 13) {
+  if (mag2 <= 14) {
     measuredR = BLACK;
-  } else if (deg2 > 30 && deg2 < 65) {
+  } else if (deg2 > 30 && deg2 < 64) {
     measuredR = RED;
-  } else if (deg2 >= 65) {
+  } else if (deg2 >= 64) {
     measuredR = YELLOW;
   } else if (deg2 > 0 && deg2 <= 30) {
     measuredR = BLUE;

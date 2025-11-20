@@ -12,8 +12,8 @@ char pass[] = "foundedin1883";
 
 // our own WEBSOCKET
 
-// char serverAddress[] = "10.5.12.247";  // server  (ISAACS COMPUTER)
-char serverAddress[] = "10.243.65.242";  // server (JANS COMPUTER)
+char serverAddress[] = "10.5.12.247";  // server  (ISAACS COMPUTER)
+// char serverAddress[] = "10.243.65.242";  // server (JANS COMPUTER)
 // char serverAddress[] = "10.5.8.205";  // server (DREWS COMPUTER)
 
 
@@ -50,7 +50,7 @@ unsigned char currentState = state0_idle;
 // =========================
 // Obstacle Detection
 // =========================
-constexpr int THRESHOLD = 660;     // stop/avoid when sensor > 580
+constexpr int THRESHOLD = 620;     // stop/avoid when sensor > 580
 
 
 // =========================
@@ -105,19 +105,19 @@ void loop() {
   //   client.begin();
   // }
   client.begin();
-  client.beginMessage(TYPE_TEXT);
-  client.print("Here");
-  client.endMessage();
+  // client.beginMessage(TYPE_TEXT);
+  // client.print("Here");
+  // client.endMessage();
 
   delay(3000); // wait for 10 seconds before starting
-  changeState(state2_goRed); // start by going to red
+  changeState(state1_crossing); // start by going to red
 
   // while (client.connected())
   while (true)
   {
-    client.beginMessage(TYPE_TEXT);
-    client.println(currentState);
-    client.endMessage();
+    // client.beginMessage(TYPE_TEXT);
+    // client.println(currentState);
+    // client.endMessage();
     // Serial.print("currentState = ");
     // Serial.println(currentState);
     // Serial.print("Wanted State = ");
@@ -147,11 +147,11 @@ void loop() {
 
       case state1_crossing: {
         // Cross intersection
-
+        colorLoop(Left, Right);
         sensorValue = analogRead(dividerIn);
-        // client.beginMessage(TYPE_TEXT);
-        // client.println(sensorValue);
-        // client.endMessage();
+        client.beginMessage(TYPE_TEXT);
+        client.println(sensorValue);
+        client.endMessage();
         forward(75);
         if (sensorValue > THRESHOLD) {
           stop();
@@ -163,9 +163,9 @@ void loop() {
           changeState(state2_goRed);
         }
 
-        client.beginMessage(TYPE_TEXT);
-        client.println(sensorValue);
-        client.endMessage();
+        // client.beginMessage(TYPE_TEXT);
+        // client.println(sensorValue);
+        // client.endMessage();
         break;
       }
 

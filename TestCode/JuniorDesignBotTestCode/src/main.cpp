@@ -13,7 +13,7 @@ char ssid[] = "tufts_eecs";
 char pass[] = "foundedin1883";
 
 // char serverAddress[] = "10.5.12.247";  // server  (ISAACS COMPUTER)
-char serverAddress[] = "10.243.65.242";  // server (JANS COMPUTER)
+char serverAddress[] = "10.5.13.74";  // server (JANS COMPUTER)
 
 int port = 8080;
 WiFiClient wifi;
@@ -31,13 +31,22 @@ int status = WL_IDLE_STATUS;
 // =========================
 // State Machine
 // =========================
-enum { state0, state1, state2, state3, state4, state5, state6 };
-unsigned char currentState = state0;  
+// enum { state0, state1, state2, state3, state4, state5, state6 };
+enum { 
+  state0_idle,
+  state1_crossing,
+  state2_goRed,
+  state3_followRed,
+  state4_goYellow,
+  state5_followYellow,
+  state6_go_home
+ };
+unsigned char currentState = state0_idle;  
 
 // =========================
 // Obstacle Detection
 // =========================
-constexpr int THRESHOLD = 660;     // stop/avoid when sensor > 400
+constexpr int THRESHOLD = 620;     // stop/avoid when sensor > 400
 
 // =========================
 // Color Sensor
@@ -52,11 +61,12 @@ int mag2 = 0;  // magnitude for second sensor
 int timer = 0; // timer for color reading intervals
 
 
+
 // =========================
 // Helpers
 // =========================
 void changeState(unsigned char newState) {
-  if (newState > state6) {
+  if (newState > state6_go_home) {
     Serial.println("Invalid state. State unchanged.");
     return;
   }
@@ -120,6 +130,7 @@ void loop() {
   // int sensorValue = analogRead(dividerIn);
   //  Serial.print("IR Sensor Value: ");
   //   Serial.println(sensorValue);
+  changeState(state1_crossing);
 
 // client.connected()
   while (1) {
@@ -131,19 +142,19 @@ void loop() {
     // Serial.println(sensorValue);
 
 
-    if(sensorValue < THRESHOLD) {
-      if(Left == 0 && Right == 0) {
-        changeState(1);
-      } else if (Left == 0 && Right == 3) {
-        changeState(6);
-      } else if (Left == 3 && Right == 0) {
-        changeState(5);
-      } else {
-        changeState(0);
-      }
-    } else {
-      changeState(0);
-    }
+    // if(sensorValue < THRESHOLD) {
+    //   if(Left == 1 && Right == 1) {
+    //     changeState(1);
+    //   } else if (Left == 1 && Right == 3) {
+    //     changeState(6);
+    //   } else if (Left == 3 && Right == 1) {
+    //     changeState(5);
+    //   } else {
+    //     changeState(0);
+    //   }
+    // } else {
+    //   changeState(0);
+    // }
 
 
 
@@ -234,14 +245,159 @@ void loop() {
     // isObstacleDetected();
 
     // --- Drive motors based on state ---
-    switch (currentState) {
-      case state0:  stop();                 break; // idle
-      case state1:  forward(75);           break;
-      case state2:  backward(75);          break;
-      case state3:  pivot_clockwise();      break;
-      case state4:  pivot_counter();        break;
-      case state5:  turn_right(17);        break;
-      case state6:  turn_left(17);         break;
+    // switch (currentState) {
+    //   case state0:  stop();                 break; // idle
+    //   case state1:  forward(75);           break;
+    //   case state2:  backward(75);          break;
+    //   case state3:  pivot_clockwise();      break;
+    //   case state4:  pivot_counter();        break;
+    //   case state5:  turn_right(17);        break;
+    //   case state6:  turn_left(17);         break;
+    // }
+
+
+     switch (currentState) {
+      case state0_idle: {
+        // Do nothing
+        stop();
+
+        // --- Handle incoming WebSocket messages ---
+        int msgSize = client.parseMessage();
+        if (msgSize > 0) {
+          String msg = client.readString();
+          int pos = msg.indexOf('.');
+          if (pos != -1) {
+            String stateStr = msg.substring(pos + 1);
+            if (stateStr.startsWith("RIDJ")) {
+              stateStr = stateStr.substring(5); 
+              int stateNum = stateStr.toInt();
+              changeState(stateNum);
+            }
+          }
+        }
+        break;
+      }
+
+      case state1_crossing: {
+        // Cross intersection
+        // sensorValue = analogRead(dividerIn);
+        // colorLoop(Left, Right, deg, deg2, mag, mag2);
+        // client.beginMessage(TYPE_TEXT);
+        // client.println(sensorValue);
+        // client.endMessage();
+        forward(75);
+        if (sensorValue > THRESHOLD) {
+          stop();
+          backward(100);
+          delay(500);
+          pivot_clockwise();
+          delay(3500);
+          stop();
+          changeState(state2_goRed);
+        }
+
+        // client.beginMessage(TYPE_TEXT);
+        // client.println(sensorValue);
+        // client.endMessage();
+        break;
+      }
+
+      case state2_goRed: {
+        // Move towards red
+        // sensorValue = analogRead(dividerIn);
+        forward(50);
+        colorLoop(Left, Right, deg, deg2, mag, mag2);
+        if (Left == RED && Right == RED) {
+          stop();
+          pivot_counter();
+          delay(1750);
+          stop();
+          changeState(state3_followRed);
+        } 
+        break;
+      }
+
+      case state3_followRed: {
+        // Follow red line
+        // sensorValue = analogRead(dividerIn);
+
+        if (sensorValue > THRESHOLD) {
+          stop();
+          backward(100);
+          delay(500);
+          pivot_counter();
+          delay(2000);
+          stop();
+          changeState(state4_goYellow);
+          break;
+        }
+
+        // colorLoop(Left, Right, deg, deg2, mag, mag2);
+        if(Left == 0 && Right == 0) {
+          forward(75);
+        } else if (Left == 0 && Right == 3) {
+          turn_left(17);
+        } else if (Left == 3 && Right == 0) {
+          turn_right(17);
+        } else {
+          stop();
+        }
+        break;
+      }
+
+      case state4_goYellow: {
+        // Move towards yellow
+        // sensorValue = analogRead(dividerIn);
+        forward(50);
+        colorLoop(Left, Right, deg, deg2, mag, mag2);
+        if (Left == YELLOW || Right == YELLOW) {
+          stop();
+          pivot_counter();
+          delay(1250);
+          stop();
+          changeState(state5_followYellow);
+        }
+        break;
+      }
+
+      case state5_followYellow: {
+        // Follow yellow line
+        // sensorValue = analogRead(dividerIn);
+
+        if (sensorValue > THRESHOLD) {
+          stop();
+          backward(100);
+          delay(500);
+          pivot_counter();
+          delay(2000);
+          stop();
+          changeState(state6_go_home);
+          break;
+        }
+
+        // colorLoop(Left, Right, deg, deg2, mag, mag2);
+        if(Left == 2 && Right == 2) {
+          forward(50);
+        } else if (Left == 2 && Right == 3) {
+          turn_left(17);
+        } else if (Left == 3 && Right == 2) {
+          turn_right(17);
+        } else {
+          stop();
+        }
+        break;
+      }
+
+      case state6_go_home: {
+        // Return to home base (assumed to be marked by both colors)
+        // sensorValue = analogRead(dividerIn);
+        forward(75);
+        if (sensorValue > THRESHOLD) {
+          stop();
+          changeState(state0_idle);
+        }
+        break;
+      }
     }
   }
 
