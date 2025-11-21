@@ -1,9 +1,8 @@
 import asyncio
 import websockets
 
-# How many samples to collect before printing a calibration summary
-CALIBRATION_SAMPLES = 80       # you can change this
-PROGRESS_EVERY = 20             # print a small progress note every N samples (set to None to disable)
+CALIBRATION_SAMPLES = 80       
+PROGRESS_EVERY = 20             
 
 def parse_sample(message: str):
     """
