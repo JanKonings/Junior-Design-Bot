@@ -1,12 +1,18 @@
 #include "colorsensor.h"
 
-
+// =========================
+// Setting pin mappings from PCB to Arduino
+// =========================
 const int redLED = 12;
 const int blueLED = 11;
 const int sensorPinL = A3;
 const int sensorPinR = A0;
 
-/// DIFFERENT
+// =========================
+// Color Sensor Variables Instantiation
+// =========================
+
+// Left sensor
 int mag = 0;
 int mag2 = 0;
 int deg = 0;
@@ -19,10 +25,9 @@ int blueValue = 0;
 int ydiff = 0;
 int xdiff = 0;
 
-// int mag = 0;
 float rads = 0;
-// float deg = 0;
 
+// Right sensor
 int ambValue2 = 0;
 int redValue2 = 0;
 int blueValue2 = 0;
@@ -30,24 +35,27 @@ int blueValue2 = 0;
 int ydiff2 = 0;
 int xdiff2 = 0;
 
-// int mag2 = 0;
 float rads2 = 0;
-// float deg2 = 0;
 
+// For 2-read confirmation
 static Color stableL = OTHER;
 static Color stableR = OTHER;
 static Color prevMeasuredL = OTHER;
 static Color prevMeasuredR = OTHER;
 
+// =========================
+// Color Sensor Setup 
+// =========================
 void colorSetup() {
   pinMode(redLED, OUTPUT);
   pinMode(blueLED, OUTPUT);
-  // Serial.begin(9600);
-  // Serial.begin(115200);
 }
 
+// =========================
+// Color Sensor Loop
+// =========================
 void colorLoop(Color &detected, Color &detected2) {
-  const int NUM_SAMPLES = 25;
+  const int NUM_SAMPLES = 25; // Number of samples to average
 
   float totalDeg  = 0, totalDeg2 = 0;
   float totalMag  = 0, totalMag2 = 0;
@@ -56,21 +64,21 @@ void colorLoop(Color &detected, Color &detected2) {
     int ambL, redL, blueL;
     int ambR, redR, blueR;
 
-    // Ambient
+    // Ambient values (LEDs off)
     digitalWrite(redLED, LOW);
     digitalWrite(blueLED, LOW);
     delay(5);
     ambL = analogRead(sensorPinL);
     ambR = analogRead(sensorPinR);
 
-    // Red reflectance
+    // Red reflectance (red LED on)
     digitalWrite(redLED, HIGH);
     digitalWrite(blueLED, LOW);
     delay(5);
     redL = analogRead(sensorPinL);
     redR = analogRead(sensorPinR);
 
-    // Blue reflectance
+    // Blue reflectance (blue LED on)
     digitalWrite(redLED, LOW);
     digitalWrite(blueLED, HIGH);
     delay(5);
@@ -87,18 +95,20 @@ void colorLoop(Color &detected, Color &detected2) {
     int ydiffR = abs(blueR - ambR);
     int xdiffR = abs(redR - ambR);
 
+    // Magnitudes and angles
     float magL = sqrt(sq(ydiffL) + sq(xdiffL));
     float magR = sqrt(sq(ydiffR) + sq(xdiffR));
     float degL = degrees(atan2(ydiffL, xdiffL));
     float degR = degrees(atan2(ydiffR, xdiffR));
 
+    // Accumulate totals
     totalMag  += magL;
     totalDeg  += degL;
     totalMag2 += magR;
     totalDeg2 += degR;
   }
 
-  // Averages
+  // Averages of totals
   mag  = totalMag  / NUM_SAMPLES;
   mag2 = totalMag2 / NUM_SAMPLES;
   deg  = totalDeg  / NUM_SAMPLES;
@@ -107,6 +117,7 @@ void colorLoop(Color &detected, Color &detected2) {
   // ----- RAW COLOR DECISIONS (measured) -----
   Color measuredL, measuredR;
 
+  // ----- 1-READ DECISION -----
   // LEFT sensor
    if (mag <= 20) {
     measuredL = BLACK;
@@ -133,6 +144,10 @@ void colorLoop(Color &detected, Color &detected2) {
     measuredR = OTHER;
   }
 
+  // ========================
+  // Stabilization Logic (IF NEEDED FOR NOISY ENVIRONMENTS)
+  // ========================
+
   // ----- 2-READ CONFIRMATION (branch predictor style) -----
   // Only change stable color if we see the same new color twice in a row
 
@@ -150,6 +165,9 @@ void colorLoop(Color &detected, Color &detected2) {
   // detected  = stableL;
   // detected2 = stableR;
 
+  
+
+  // Output the IMMEDIATE decision (1-read)
   detected  = measuredL;
   detected2 = measuredR;
 }

@@ -98,9 +98,6 @@ async def handler(websocket):
                 print(f"  DEG_MAX  = {right_deg_max}")
                 print("=========================================\n")
 
-                # If you ever want the bot to know calibration finished:
-                # await websocket.send("CALIB_DONE")
-
                 reset_stats()
 
     except Exception as e:

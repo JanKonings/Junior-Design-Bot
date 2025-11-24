@@ -1,6 +1,8 @@
 #include "motorControl.h"
 
-
+// =========================
+// Motor Control Functions
+// =========================
 void motorSetup() {
     pinMode(AI1, OUTPUT);
     pinMode(AI2, OUTPUT);
@@ -13,8 +15,7 @@ void motorSetup() {
     digitalWrite(STBY, HIGH);
 }
 
-
-
+// Helper functions to make main motor functions cleaner
 void stopRight() {
     digitalWrite(BI1, LOW);
     digitalWrite(BI2, LOW);
@@ -50,15 +51,12 @@ void startLeftBackward(int speed) {
     analogWrite(PWMA, speed);
 }
 
-
-
+// Main motor functions
 void stop() {
     stopLeft();
     stopRight();
 }
 
-// A is RIGHT motor
-// B is LEFT motor
 void pivot_clockwise() {
     stopLeft();
     startRightBackward(100);
@@ -69,17 +67,6 @@ void pivot_counter() {
     startLeftBackward(100);
 }
 
-// void turn_right(int speedLeft) {
-//     startLeftForward(100);
-//     startRightForward(speedLeft);
-// }
-
-// void turn_left(int speedRight) {
-//     startRightForward(100);
-//     startLeftForward(speedRight);
-// }
-
-//for new orienattion
 void turn_right(int speedLeft) {
     startLeftBackward(speedLeft);
     startRightBackward(64);
@@ -89,7 +76,6 @@ void turn_left(int speedRight) {
     startRightBackward(speedRight);
     startLeftBackward(64);
 }
-
 
 void backward(int speed) {
     startLeftForward(speed);

@@ -1,18 +1,9 @@
 #include <WiFiNINA.h>
 #include <ArduinoHttpClient.h>
 
-// pins for motor control
-
-//OLD CONFIG
-
-// constexpr int PWMA = 9;
-// constexpr int PWMB = 10;
-// constexpr int AI1 = 4;
-// constexpr int AI2 = 5;
-// constexpr int BI1 = 6;
-// constexpr int BI2 = 7;
-// constexpr int STBY = 8;
-
+// =========================
+// Motor Control Pin Definitions
+// =========================
 constexpr int PWMA = 9;
 constexpr int PWMB = 6;
 constexpr int AI1 = 4;
@@ -21,6 +12,11 @@ constexpr int BI1 = 8;
 constexpr int BI2 = 7;
 constexpr int STBY = 5;
 
+// =========================
+// Motor Control Function Prototypes
+// =========================
+
+// Main motor functions
 void motorSetup();
 
 void forward(int speed);
@@ -37,6 +33,7 @@ void turn_left_backward(int speedRight);
 
 void stop();
 
+// Helper functions to make main motor functions cleaner
 void stopRight();
 void stopLeft();
 

@@ -1,3 +1,6 @@
+#include <WiFiNINA.h>
+#include <ArduinoHttpClient.h>
+
 // =========================
 // Obstacle Detection Pins Configuratiosn
 // =========================

@@ -1,7 +1,9 @@
 #include <WiFiNINA.h>
 #include <ArduinoHttpClient.h>
 
-
+// =========================
+// Color Sensor Definitions
+// =========================
 enum Color {
   RED,
   BLUE,
@@ -9,9 +11,9 @@ enum Color {
   BLACK,
   OTHER
 };
-// Black < 45, degree 45-50
-// Blue > 65
-// 
 
+// =========================
+// Color Sensor Function Prototypes
+// =========================
 void colorSetup();
 void colorLoop(Color &detected, Color &detected2);

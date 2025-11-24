@@ -112,6 +112,7 @@ void colorLoop(Color &detected, Color &detected2, int &deg, int &deg2, int &mag,
   deg  = totalDeg  / NUM_SAMPLES;
   deg2 = totalDeg2 / NUM_SAMPLES;
 
+  // ----- RAW COLOR DECISIONS (measured) -----
   Color measuredL, measuredR;
 
   // ----- 1-READ DECISION -----
@@ -162,7 +163,7 @@ void colorLoop(Color &detected, Color &detected2, int &deg, int &deg2, int &mag,
   // detected  = stableL;
   // detected2 = stableR;
 
-  
+
 
   // Output the IMMEDIATE decision (1-read)
   detected  = measuredL;
