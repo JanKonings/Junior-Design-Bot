@@ -141,6 +141,10 @@ void colorLoop(Color &detected, Color &detected2, int &deg, int &deg2, int &mag,
     measuredR = OTHER;
   }
 
+  // ========================
+  // Stabilization Logic (IF NEEDED FOR NOISY ENVIRONMENTS)
+  // ========================
+
   // ----- 2-READ CONFIRMATION (branch predictor style) -----
   // Only change stable color if we see the same new color twice in a row
 
@@ -158,6 +162,9 @@ void colorLoop(Color &detected, Color &detected2, int &deg, int &deg2, int &mag,
   // detected  = stableL;
   // detected2 = stableR;
 
+  
+
+  // Output the IMMEDIATE decision (1-read)
   detected  = measuredL;
   detected2 = measuredR;
 }
