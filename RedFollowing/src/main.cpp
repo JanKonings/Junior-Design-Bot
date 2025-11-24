@@ -100,34 +100,16 @@ void setup() {
 // Main Loop
 // =========================
 void loop() {
-  // connect
-  // if (!client.connected()) {
-  //   client.begin();
-  // }
-  // client.begin();
-  // client.beginMessage(TYPE_TEXT);
-  // client.print("Here");
-  // client.endMessage();
-
-  delay(1000); // wait for 10 seconds before starting
+  delay(1000); // wait for 1 seconds before starting
   changeState(state1_crossing); // start by going to red
 
-  // while (client.connected())
   while (true)
   {
     colorLoop(Left, Right); // Read color sensor values
-    int sensorValue = analogRead(dividerIn);
-    // client.beginMessage(TYPE_TEXT);
-    // client.println(currentState);
-    // client.endMessage();
-    // Serial.print("currentState = ");
-    // Serial.println(currentState);
-    // Serial.print("Wanted State = ");
-    // Serial.println(state1_crossing);
+    int sensorValue = analogRead(dividerIn); // Read obstacle detection sensor
     
     switch (currentState) {
       case state0_idle: {
-        // Do nothing
         stop();
 
         // --- Handle incoming WebSocket messages ---
@@ -148,12 +130,6 @@ void loop() {
       }
 
       case state1_crossing: {
-        // Cross intersection
-        // sensorValue = analogRead(dividerIn);
-        // colorLoop(Left, Right, deg, deg2, mag, mag2);
-        // client.beginMessage(TYPE_TEXT);
-        // client.println(sensorValue);
-        // client.endMessage();
         forward(75);
         if (sensorValue > THRESHOLD) {
           stop();
@@ -164,16 +140,10 @@ void loop() {
           stop();
           changeState(state2_goRed);
         }
-
-        // client.beginMessage(TYPE_TEXT);
-        // client.println(sensorValue);
-        // client.endMessage();
         break;
       }
 
       case state2_goRed: {
-        // Move towards red
-        // sensorValue = analogRead(dividerIn);
         forward(50);
         if (Left == RED && Right == RED) {
           stop();
@@ -186,9 +156,6 @@ void loop() {
       }
 
       case state3_followRed: {
-        // Follow red line
-        // sensorValue = analogRead(dividerIn);
-
         if (sensorValue > THRESHOLD) {
           stop();
           backward(200);
@@ -200,7 +167,6 @@ void loop() {
           break;
         }
 
-        // colorLoop(Left, Right, deg, deg2, mag, mag2);
         if(Left == RED && Right == RED) {
           forward(75);
         } else if (Left == RED && Right == 3) {
@@ -214,8 +180,6 @@ void loop() {
       }
 
       case state4_goYellow: {
-        // Move towards yellow
-        // sensorValue = analogRead(dividerIn);
         forward(50);
         if (Left == YELLOW || Right == YELLOW) {
           stop();
@@ -228,9 +192,6 @@ void loop() {
       }
 
       case state5_followYellow: {
-        // Follow yellow line
-        // sensorValue = analogRead(dividerIn);
-
         if (sensorValue > THRESHOLD) {
           stop();
           backward(100);
@@ -242,7 +203,6 @@ void loop() {
           break;
         }
 
-        // colorLoop(Left, Right, deg, deg2, mag, mag2);
         if(Left == 2 && Right == 2) {
           forward(50);
         } else if (Left == 2 && Right == 3) {
@@ -256,8 +216,6 @@ void loop() {
       }
 
       case state6_go_home: {
-        // Return to home base (assumed to be marked by both colors)
-        // sensorValue = analogRead(dividerIn);
         forward(75);
         if (sensorValue > THRESHOLD) {
           stop();
