@@ -67,7 +67,7 @@ int sensorValue = 0;  // value from color sensor
 // Helpers
 // =========================
 void changeState(unsigned char newState) {
-  if (newState > state6_go_home) return;
+  if (newState > state7_go_home) return;
 
   currentState = newState;
 }

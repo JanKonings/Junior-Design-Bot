@@ -6,17 +6,18 @@
 // =========================
 // WiFi / WebSocket Setup
 // =========================
-// char ssid[] = "tufts_eecs";
-// char pass[] = "foundedin1883";
+char ssid[] = "tufts_eecs";
+char pass[] = "foundedin1883";
 
-// class WEBSOCKET
+class WEBSOCKET
 
-// char serverAddress[] = "34.28.153.91";  // server address
-// int port = 80;
-// WiFiClient wifi;
-// WebSocketClient client = WebSocketClient(wifi, serverAddress, port);
-// String clientID = "89C87865077A"; // Insert your Client ID Here!
-// int status = WL_IDLE_STATUS;
+char serverAddress[] = "34.28.153.91";  // server address
+int port = 80;
+WiFiClient wifi;
+WebSocketClient client = WebSocketClient(wifi, serverAddress, port);
+String clientID = "89C87865077A"; // Insert your Client ID Here!
+int status = WL_IDLE_STATUS;
+String msg;
 
 // =========================
 // State Machine
@@ -98,6 +99,13 @@ void loop() {
         // Do nothing
         stop();
 
+        int msgSize = client.parseMessage();
+        if (msgSize > 0) {
+          msg = client.readString();
+        }
+
+        if (msg == "red lane found") changeState(state1_crossing);
+
         // --- Handle incoming WebSocket messages ---
         // int msgSize = client.parseMessage();
         // if (msgSize > 0) {
@@ -136,6 +144,11 @@ void loop() {
           pivot_clockwise();
           delay(1750);
           stop();
+
+          client.beginMessage(TYPE_TEXT);
+          client.print("blue lane found");
+          client.endMessage();
+
           changeState(state3_followRed);
         } 
         break;
@@ -205,6 +218,9 @@ void loop() {
         forward(75);
         if (sensorValue > 600) {
           stop();
+          client.beginMessage(TYPE_TEXT);
+          client.print("returned");
+          client.endMessage();
           changeState(state0_idle);
         }
         break;
