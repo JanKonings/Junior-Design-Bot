@@ -12,10 +12,21 @@ char pass[] = "foundedin1883";
 
 // our own WEBSOCKET
 
-char serverAddress[] = "10.5.12.247";  // server  (ISAACS COMPUTER)
-// char serverAddress[] = "10.243.65.242";  // server (JANS COMPUTER)
-// char serverAddress[] = "10.5.8.205";  // server (DREWS COMPUTER)
+// char serverAddress[] = "10.5.12.247";  // server  (ISAACS COMPUTER)
+// // char serverAddress[] = "10.243.65.242";  // server (JANS COMPUTER)
+// // char serverAddress[] = "10.5.8.205";  // server (DREWS COMPUTER)
 
+
+// int port = 8080;
+// WiFiClient wifi;
+// WebSocketClient client = WebSocketClient(wifi, serverAddress, port);
+// String clientID = "89C87865077A"; // Insert your Client ID Here!
+// int status = WL_IDLE_STATUS;
+
+// class WEBSOCKET
+
+// char serverAddress[] = "34.28.153.91";  // server address
+char serverAddress[] = "35.239.140.61";  // server address
 
 int port = 8080;
 WiFiClient wifi;
@@ -23,14 +34,7 @@ WebSocketClient client = WebSocketClient(wifi, serverAddress, port);
 String clientID = "89C87865077A"; // Insert your Client ID Here!
 int status = WL_IDLE_STATUS;
 
-// class WEBSOCKET
 
-// char serverAddress[] = "34.28.153.91";  // server address
-// int port = 80;
-// WiFiClient wifi;
-// WebSocketClient client = WebSocketClient(wifi, serverAddress, port);
-// String clientID = "89C87865077A"; // Insert your Client ID Here!
-// int status = WL_IDLE_STATUS;
 
 // =========================
 // State Machine
@@ -50,7 +54,11 @@ unsigned char currentState = state0_idle;
 // =========================
 // Obstacle Detection
 // =========================
-constexpr int THRESHOLD = 620;     // stop/avoid when sensor > 580
+//LIGHT
+// constexpr int THRESHOLD = 620;     // stop/avoid when sensor > 580
+//DARK
+constexpr int THRESHOLD = 300;     // stop/avoid when sensor > 580
+
 
 
 // =========================
@@ -71,12 +79,23 @@ void changeState(unsigned char newState) {
 }
 
 void wifiConnect() {
-  while (status != WL_CONNECTED) {
+  Serial.begin(9600);
+  while ( status != WL_CONNECTED) {
+    Serial.print("Attempting to connect to Network named: ");
+    Serial.println(ssid); // print the network name (SSID);
+
+    // Connect to WPA/WPA2 network:
     status = WiFi.begin(ssid, pass);
-    delay(1000);
   }
 
+  // print the SSID of the network you're attached to:
+  Serial.print("SSID: ");
+  Serial.println(WiFi.SSID());
+
+  // print your WiFi shield's IP address:
   IPAddress ip = WiFi.localIP();
+  Serial.print("IP Address: ");
+  Serial.println(ip);
 }
 
 // =========================
@@ -93,7 +112,7 @@ void setup() {
   obstacleDetectingSetup();
 
   // Connect to WiFi
-  // wifiConnect();
+  wifiConnect();
 }
 
 // =========================
@@ -101,12 +120,21 @@ void setup() {
 // =========================
 void loop() {
   delay(1000); // wait for 1 seconds before starting
-  changeState(state1_crossing); // start by going to red
+  Serial.println("starting WebSocket client");
+  client.begin();
+  client.beginMessage(TYPE_TEXT);
+  client.print(clientID);
+  client.endMessage();
+  // changeState(state1_crossing); // start by going to red
+  Serial.print("got here");
 
-  while (true)
+  while (client.connected())
   {
     colorLoop(Left, Right); // Read color sensor values
     int sensorValue = analogRead(dividerIn); // Read obstacle detection sensor
+    // client.beginMessage(TYPE_TEXT);
+    // client.print(sensorValue);
+    // client.endMessage();
     
     switch (currentState) {
       case state0_idle: {
