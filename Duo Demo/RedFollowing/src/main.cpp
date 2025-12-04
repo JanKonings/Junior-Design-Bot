@@ -22,6 +22,7 @@ WiFiClient wifi;
 WebSocketClient client = WebSocketClient(wifi, serverAddress, port);
 String clientID = "89C87865077A"; // Insert your Client ID Here!
 int status = WL_IDLE_STATUS;
+String msg;
 
 // class WEBSOCKET
 
@@ -41,8 +42,9 @@ enum {
   state2_goRed,
   state3_followRed,
   state4_goYellow,
-  state5_followYellow,
-  state6_go_home
+  state5_waitYellow,
+  state6_followYellow,
+  state7_go_home
  };
 
 unsigned char currentState = state0_idle;  
@@ -150,6 +152,10 @@ void loop() {
           pivot_counter();
           delay(1750);
           stop();
+
+          client.beginMessage(TYPE_TEXT);
+          client.print("red lane found");
+          client.endMessage();
           changeState(state3_followRed);
         } 
         break;
@@ -186,12 +192,22 @@ void loop() {
           pivot_counter();
           delay(1250);
           stop();
-          changeState(state5_followYellow);
+          changeState(state5_waitYellow);
         }
         break;
       }
 
-      case state5_followYellow: {
+      case state5_waitYellow: {
+        
+        int msgSize = client.parseMessage();
+        if (msgSize > 0) {
+          msg = client.readString();
+        }
+
+        if (msg == "blue lane found") changeState(state6_followYellow);
+      }
+
+      case state6_followYellow: {
         if (sensorValue > THRESHOLD) {
           stop();
           backward(100);
@@ -199,7 +215,7 @@ void loop() {
           pivot_counter();
           delay(1500);
           stop();
-          changeState(state6_go_home);
+          changeState(state7_go_home);
           break;
         }
 
@@ -215,11 +231,15 @@ void loop() {
         break;
       }
 
-      case state6_go_home: {
+      case state7_go_home: {
         forward(75);
         if (sensorValue > THRESHOLD) {
           stop();
           changeState(state0_idle);
+
+          client.beginMessage(TYPE_TEXT);
+          client.print("returned");
+          client.endMessage();
         }
         break;
       }
