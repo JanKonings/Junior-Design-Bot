@@ -7,6 +7,7 @@ This project uses an Arduino UNO Wifi Rev2 to implement an autonomous bot that f
 A comprehensive documentation summary can be found here.
 
 ## Hardware
+![Block Diagram](Block%20Diagram%20v3.png)
 
 ## Software Design
 
