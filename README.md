@@ -23,10 +23,24 @@ A comprehensive documentation summary can be found here.
 ## Hardware
 ![Block Diagram](Block%20Diagram%20v3.png)
 **Parts List & Quantity**
-- Arduino UNO Wifi Rev2 --> 1
-- IR Phototransistor    -->     1
-- Phototransistor (Visible)  --> 2
-- IR LED                       
+- Arduino UNO Wifi Rev2
+- TB6612FNG H-Bridge
+- LM2596 Buck Converter
+- DC Motors x2
+- IR Phototransistor  
+- Phototransistor (Visible)  x2
+- IR LED       
+- Red LED   x2
+- Blue LED x2
+- Resistors (240 Ω) 0805 SMD x2
+- Resistors (620 Ω) 0805 SMD x2
+- Resistors (330 kΩ) 0805 SMD x2
+- Resistor (1.5 MΩ) 0805 SMD 
+- Standard resistor (1.0 MΩ) 
+- Capacitor (10 μF) 0805 SMD
+- Capacitor (1 μF) 0805 SMD 
+- Electrolytic Capacitor (10 μF) x6
+- 9V Battery x2
 
 ## Software Design
 
