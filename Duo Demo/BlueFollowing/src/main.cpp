@@ -8,6 +8,8 @@
 // =========================
 char ssid[] = "tufts_eecs";
 char pass[] = "foundedin1883";
+char ssid[] = "tufts_eecs";
+char pass[] = "foundedin1883";
 
 //class WEBSOCKET
 
