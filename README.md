@@ -23,9 +23,9 @@ A comprehensive documentation summary can be found here.
 ## Hardware
 ![Block Diagram](Block%20Diagram%20v3.png)
 **Parts List & Quantity**
-- Arduino UNO Wifi Rev2      1
-- IR Phototransistor         1
-- Phototransistor (Visible)  2
+- Arduino UNO Wifi Rev2 --> 1
+- IR Phototransistor    -->     1
+- Phototransistor (Visible)  --> 2
 - IR LED                       
 
 ## Software Design
