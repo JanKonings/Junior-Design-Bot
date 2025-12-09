@@ -10,5 +10,4 @@ constexpr int IRled = 13;
 // =========================
 // Obstacle Detection Function Prototypes
 // =========================
-void isObstacleDetected();
 void obstacleDetectingSetup();

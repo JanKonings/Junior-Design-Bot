@@ -16,7 +16,6 @@ constexpr int STBY = 5;
 // Motor Control Function Prototypes
 // =========================
 
-// Main motor functions
 void motorSetup();
 
 void forward(int speed);
@@ -33,7 +32,6 @@ void turn_left_backward(int speedRight);
 
 void stop();
 
-// Helper functions to make main motor functions cleaner
 void stopRight();
 void stopLeft();
 

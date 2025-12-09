@@ -55,7 +55,7 @@ void colorSetup() {
 // Color Sensor Loop
 // =========================
 void colorLoop(Color &detected, Color &detected2) {
-  const int NUM_SAMPLES = 25; // Number of samples to average
+  const int NUM_SAMPLES = 25; 
 
   float totalDeg  = 0, totalDeg2 = 0;
   float totalMag  = 0, totalMag2 = 0;
@@ -143,29 +143,6 @@ void colorLoop(Color &detected, Color &detected2) {
   } else {
     measuredR = OTHER;
   }
-
-  // ========================
-  // Stabilization Logic (IF NEEDED FOR NOISY ENVIRONMENTS)
-  // ========================
-
-  // ----- 2-READ CONFIRMATION (branch predictor style) -----
-  // Only change stable color if we see the same new color twice in a row
-
-  // if (measuredL == prevMeasuredL && measuredL != stableL) {
-  //   stableL = measuredL;
-  // }
-  // if (measuredR == prevMeasuredR && measuredR != stableR) {
-  //   stableR = measuredR;
-  // }
-
-  // prevMeasuredL = measuredL;
-  // prevMeasuredR = measuredR;
-
-  // Output the STABLE decision
-  // detected  = stableL;
-  // detected2 = stableR;
-
-  
 
   // Output the IMMEDIATE decision (1-read)
   detected  = measuredL;

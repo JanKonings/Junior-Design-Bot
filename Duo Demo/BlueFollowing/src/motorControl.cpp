@@ -15,7 +15,6 @@ void motorSetup() {
     digitalWrite(STBY, HIGH);
 }
 
-// Helper functions to make main motor functions cleaner
 void stopRight() {
     digitalWrite(BI1, LOW);
     digitalWrite(BI2, LOW);
@@ -51,7 +50,6 @@ void startLeftBackward(int speed) {
     analogWrite(PWMA, speed);
 }
 
-// Main motor functions
 void stop() {
     stopLeft();
     stopRight();

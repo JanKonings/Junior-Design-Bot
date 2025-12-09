@@ -119,11 +119,11 @@ void colorLoop(Color &detected, Color &detected2) {
 
   // ----- 1-READ DECISION -----
   // LEFT sensor
-   if (mag <= 20) {
+   if (mag <= 30) {
     measuredL = BLACK;
-  } else if (deg >= 30 && deg <= 74) {
+  } else if (deg >= 30 && deg <= 70) {
     measuredL = RED;
-  } else if (deg > 74) {
+  } else if (deg > 70) {
     measuredL = YELLOW;
   } else if (deg > 0 && deg < 30) {
     measuredL = BLUE;
@@ -132,41 +132,18 @@ void colorLoop(Color &detected, Color &detected2) {
   }
 
   // RIGHT sensor
-  if (mag2 <= 10) {
+  if (mag2 <= 13) {
     measuredR = BLACK;
-  } else if (deg2 > 30 && deg2 <= 65) {
+  } else if (deg2 > 30 && deg2 <= 70) {
     measuredR = RED;
-  } else if (deg2 > 65) {
+  } else if (deg2 > 70) {
     measuredR = YELLOW;
   } else if (deg2 > 0 && deg2 <= 30) {
     measuredR = BLUE;
   } else {
     measuredR = OTHER;
   }
-
-  // ========================
-  // Stabilization Logic (IF NEEDED FOR NOISY ENVIRONMENTS)
-  // ========================
-
-  // ----- 2-READ CONFIRMATION (branch predictor style) -----
-  // Only change stable color if we see the same new color twice in a row
-
-  // if (measuredL == prevMeasuredL && measuredL != stableL) {
-  //   stableL = measuredL;
-  // }
-  // if (measuredR == prevMeasuredR && measuredR != stableR) {
-  //   stableR = measuredR;
-  // }
-
-  // prevMeasuredL = measuredL;
-  // prevMeasuredR = measuredR;
-
-  // Output the STABLE decision
-  // detected  = stableL;
-  // detected2 = stableR;
-
   
-
   // Output the IMMEDIATE decision (1-read)
   detected  = measuredL;
   detected2 = measuredR;

@@ -9,28 +9,17 @@
 char ssid[] = "tufts_eecs";
 char pass[] = "foundedin1883";
 
+//class WEBSOCKET
 
-// our own WEBSOCKET
-
-char serverAddress[] = "10.5.12.247";  // server  (ISAACS COMPUTER)
-// char serverAddress[] = "10.243.65.242";  // server (JANS COMPUTER)
-// char serverAddress[] = "10.5.8.205";  // server (DREWS COMPUTER)
-
-
+//char serverAddress[] = "34.28.153.91";  // server address
+char serverAddress[] = "35.239.140.61";  // server address NEW
 int port = 8080;
 WiFiClient wifi;
 WebSocketClient client = WebSocketClient(wifi, serverAddress, port);
 String clientID = "89C87865077A"; // Insert your Client ID Here!
+String clientID_MACJ = "8050D1451904";  // Mac jones client ID
 int status = WL_IDLE_STATUS;
-
-// class WEBSOCKET
-
-// char serverAddress[] = "34.28.153.91";  // server address
-// int port = 80;
-// WiFiClient wifi;
-// WebSocketClient client = WebSocketClient(wifi, serverAddress, port);
-// String clientID = "89C87865077A"; // Insert your Client ID Here!
-// int status = WL_IDLE_STATUS;
+String msg;
 
 // =========================
 // State Machine
@@ -50,7 +39,8 @@ unsigned char currentState = state0_idle;
 // =========================
 // Obstacle Detection
 // =========================
-constexpr int THRESHOLD = 620;     // stop/avoid when sensor > 580
+// constexpr int THRESHOLD = 555;     // stop/avoid when sensor > 555 LIGHT
+constexpr int THRESHOLD = 290;     // stop/avoid when sensor > 290 DARK
 
 
 // =========================
@@ -70,57 +60,58 @@ void changeState(unsigned char newState) {
   currentState = newState;
 }
 
-void wifiConnect() {
-  while (status != WL_CONNECTED) {
-    status = WiFi.begin(ssid, pass);
-    delay(1000);
-  }
 
-  IPAddress ip = WiFi.localIP();
-}
+void wifiConnect() {
+   while (status != WL_CONNECTED) {
+     status = WiFi.begin(ssid, pass);
+     delay(1000);
+   }
+
+   IPAddress ip = WiFi.localIP();
+  }
 
 // =========================
 // Setup
 // =========================
 void setup() {
-  colorSetup(); // Initialize color sensor
+  colorSetup();
 
   Serial.begin(9600);
 
   motorSetup();
 
-  // LED + obstacle detection hardware
   obstacleDetectingSetup();
 
   // Connect to WiFi
-  // wifiConnect();
+  wifiConnect();
+  client.begin();
+  client.beginMessage(TYPE_TEXT);
+  client.print(clientID); 
+  client.endMessage();
 }
 
 // =========================
 // Main Loop
 // =========================
 void loop() {
-  delay(1000); // wait for 1 seconds before starting
-  changeState(state1_crossing); // start by going to red
+  delay(1000); 
 
-  while (true)
+  while (client.connected())
   {
-    colorLoop(Left, Right); // Read color sensor values
-    int sensorValue = analogRead(dividerIn); // Read obstacle detection sensor
-    
+    colorLoop(Left, Right);
+    int sensorValue = analogRead(dividerIn);
     switch (currentState) {
       case state0_idle: {
         stop();
-
-        // --- Handle incoming WebSocket messages ---
         int msgSize = client.parseMessage();
         if (msgSize > 0) {
-          String msg = client.readString();
+          msg = client.readString();
+          Serial.println("Received message: " + msg);
           int pos = msg.indexOf('.');
           if (pos != -1) {
             String stateStr = msg.substring(pos + 1);
             if (stateStr.startsWith("RIDJ")) {
-              stateStr = stateStr.substring(5); 
+              stateStr = stateStr.substring(5);
               int stateNum = stateStr.toInt();
               changeState(stateNum);
             }
@@ -128,7 +119,7 @@ void loop() {
         }
         break;
       }
-
+  
       case state1_crossing: {
         forward(75);
         if (sensorValue > THRESHOLD) {
@@ -136,7 +127,7 @@ void loop() {
           backward(100);
           delay(500);
           pivot_clockwise();
-          delay(3250);
+          delay(3500);
           stop();
           changeState(state2_goRed);
         }
@@ -150,6 +141,11 @@ void loop() {
           pivot_counter();
           delay(1750);
           stop();
+
+          client.beginMessage(TYPE_TEXT);
+          client.print("MACJ 2"); 
+          client.endMessage();
+
           changeState(state3_followRed);
         } 
         break;
@@ -169,9 +165,9 @@ void loop() {
 
         if(Left == RED && Right == RED) {
           forward(75);
-        } else if (Left == RED && Right == 3) {
+        } else if (Left == RED && Right != RED) {
           turn_left(17);
-        } else if (Left == 3 && Right == RED) {
+        } else if (Left != RED && Right == RED) {
           turn_right(17);
         } else {
           stop();
@@ -186,7 +182,7 @@ void loop() {
           pivot_counter();
           delay(1250);
           stop();
-          changeState(state5_followYellow);
+          changeState(state0_idle);
         }
         break;
       }
@@ -203,11 +199,11 @@ void loop() {
           break;
         }
 
-        if(Left == 2 && Right == 2) {
+        if(Left == YELLOW && Right == YELLOW) {
           forward(50);
-        } else if (Left == 2 && Right == 3) {
+        } else if (Left == YELLOW && Right != YELLOW) {
           turn_left(17);
-        } else if (Left == 3 && Right == 2) {
+        } else if (Left != YELLOW && Right == YELLOW) {
           turn_right(17);
         } else {
           stop();
@@ -219,6 +215,9 @@ void loop() {
         forward(75);
         if (sensorValue > THRESHOLD) {
           stop();
+          client.beginMessage(TYPE_TEXT);
+          client.print("MACJ 10"); 
+          client.endMessage();
           changeState(state0_idle);
         }
         break;
@@ -226,4 +225,3 @@ void loop() {
     }
   }
 }
-
