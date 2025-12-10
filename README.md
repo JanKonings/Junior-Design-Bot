@@ -1,4 +1,4 @@
-# Junior Design Project: Autonomous Bot RC Bot Using Arduino UNO WiFi Rev2| EE31 | Fall 2025
+# Junior Design Project: Autonomous Bot RC using Arduino UNO WiFi Rev2| EE31 | Fall 2025
 ### Made by: Jan Konings, Drew Galen, Isaac Medina, and Ryan Chen
 ### Tufts University
 ### School of Engineering | Department of Electrical and Computer Engineering
