@@ -21,7 +21,7 @@ A comprehensive documentation summary can be found here.
 - websocket.py: A simple websocket to connect to for debugging
 
 ## Hardware
-![Block Diagram](Block%20Diagram%20v3.png)
+![Block Diagram](Schematics/Block%20Diagram%20v3.png)
 **Parts List & Quantity**
 - Arduino UNO Wifi Rev2
 - TB6612FNG H-Bridge
