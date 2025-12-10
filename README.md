@@ -57,4 +57,4 @@ The IR LED connected to GPIO 11 sends a constant IR signal. Using a voltage divi
 
 The red and blue LEDs are constantly flashing on the ground. Using analog read pins and a voltage divider connected to the phototransistors and 330 kΩ resistors, a voltage is given to interpret the data. Using a polar coordinate system, the magnitude and angle of each color are taken, and that is used to determine the color (shown in the figure below). See "colorsensor.cpp" for the mathematical specifics. 
 
-
+![Color Sensing Coords](Schematics/colorsensorcoords.png)
