@@ -61,3 +61,4 @@ The red and blue LEDs are constantly flashing on the ground. Using analog read p
 
 ## Arena and Course Guidelines
 ![Solo Demo Bot 1](Schematics/SOLODEMOBOT1.png)
+![Duo Demo Bot 1](Schematics/DUODEMOBOT1.png)
