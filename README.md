@@ -44,3 +44,6 @@ A comprehensive documentation summary can be found here.
 
 ## Embedded Firmware Design
 
+**Collision Detection**
+
+**Color Sensing (i.e., Lane Detection)**
