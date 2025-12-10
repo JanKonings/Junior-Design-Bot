@@ -49,7 +49,7 @@ A comprehensive documentation summary can be found here.
 
 ![Collision Detection](Schematics/Collision%20Detection.png)
 
-The IR LED connected to GPIO 11 sends a constant IR signal. Using a voltage divider connected to the IR phototransistor, an ADC pin (A0) is used to read the voltage. When the bot is relatively far from an arena wall, the ADC voltage is low (~<555 (light)/290 (dark)); when the bot gets close enough to a wall the voltage read goes up indicating the bot is close to a wall and needs to change course. 
+The IR LED connected to GPIO 11 sends a constant IR signal. Using a voltage divider connected to the IR phototransistor, an ADC pin (A0) is used to read the voltage. When the bot is relatively far from an arena wall, the ADC voltage is low (~<555 (light)/290 (dark)); when the bot gets close enough to a wall, the voltage read goes up, indicating the bot is close to a wall and needs to change course. 
 
 **Color Sensing (i.e., Lane Detection)**
 
@@ -58,3 +58,6 @@ The IR LED connected to GPIO 11 sends a constant IR signal. Using a voltage divi
 The red and blue LEDs are constantly flashing on the ground. Using analog read pins and a voltage divider connected to the phototransistors and 330 kΩ resistors, a voltage is given to interpret the data. Using a polar coordinate system, the magnitude and angle of each color are taken, and that is used to determine the color (shown in the figure below). See "colorsensor.cpp" for the mathematical specifics. 
 
 ![Color Sensing Coords](Schematics/colorsensorcoords.png)
+
+## Arena and Course Guidelines
+![Solo Demo Bot 1](Schematics/SOLODEMOBOT1.png)
