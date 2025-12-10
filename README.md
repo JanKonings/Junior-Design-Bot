@@ -63,4 +63,4 @@ The red and blue LEDs are constantly flashing on the ground. Using analog read p
 ![Solo Demo Bot 1](Schematics/SOLODEMOBOT1.png)
 ![Duo Demo Bot 1](Schematics/DUODEMOBOT1.png)
 
-The joint demo (Duo Demo) needed to be done as both bot 1 and bot 2. The solo demo bot 2 variation is the exact same as bot 1, but inverted to follow blue instead of red. 
+The joint demo (Duo Demo) needed to be done for both bot 1 and bot 2. The solo demo bot 2 variation is the exact same as bot 1, but inverted to follow blue instead of red. To show robustness of the design, all demos were performed in a light room and a dark room.
