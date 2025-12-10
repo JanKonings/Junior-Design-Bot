@@ -42,5 +42,5 @@ A comprehensive documentation summary can be found here.
 - Electrolytic Capacitor (10 μF) x6
 - 9V Battery x2
 
-## Software Design
+## Embedded Firmware Design
 
